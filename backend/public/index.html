@@ -11,7 +11,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <style>
 :root{--bg:#090b10;--bg2:#0f131a;--panel:rgba(15,19,26,.76);--line:rgba(236,240,246,.1);--ink:#eef1f6;--mute:#8f99a8;--burn:#ff5a1f;--burn2:#ffb08a;--bless:#ffd34d;--bless2:#fff1b8;--stash:#6fc3ff;--stash2:#cfe9ff;--jev:#9dff5a;--r:22px}
@@ -88,81 +88,105 @@ nav .sp{flex:1}
 .pill .led.on{background:var(--jev);box-shadow:0 0 10px var(--jev);animation:led 1.4s infinite}
 @keyframes led{50%{opacity:.35}}
 
-/* ------------------------------------------------ below the box */
-main{max-width:1160px;margin:0 auto;padding:0 18px 80px}
-section{padding-top:84px}
-.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--jev)}
-h2{font-family:"Unbounded";font-weight:900;font-size:clamp(28px,4.6vw,52px);line-height:1.02;letter-spacing:-.04em;margin:10px 0 14px}
-h2 em{font-style:normal;color:var(--burn)} h2 u{text-decoration:none;color:var(--bless)} h2 s{text-decoration:none;color:var(--stash)}
-.lede{font-size:17px;color:var(--mute);max-width:760px;line-height:1.55}
-.lede b{color:var(--ink)}
-.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
-.step .n{font-family:"Unbounded";font-weight:900;font-size:13px;color:var(--bg);background:var(--jev);width:30px;height:30px;border-radius:10px;display:grid;place-items:center}
-.step h4{font-family:"Unbounded";font-size:15px;font-weight:700;margin:14px 0 6px}
-.step p{font-size:14px;color:var(--mute);line-height:1.5}
-.step p b{color:var(--ink)}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-.kpi .v{font-family:"Unbounded";font-weight:900;font-size:26px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.kpi .k{font-size:12px;color:var(--mute);margin-top:4px}
-.two{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin-top:24px}
+/* ------------------------------------------------ below the box: the lab report (paper) */
+.report{background:var(--paper);color:var(--inkp);--paper:#f4f3ee;--paper2:#ffffff;--inkp:#121419;--rule:#d6d4cb;--rule2:#ebe9e2;--mutep:#656b78;--accent:#2b6cff}
+main{max-width:1180px;margin:0 auto;padding:0 22px 40px}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0;border-bottom:2px solid var(--inkp);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mutep)}
+.rhead b{color:var(--inkp);font-weight:600}
+section{display:grid;grid-template-columns:280px minmax(0,1fr);gap:48px;padding:52px 0 56px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mutep)}
+.eyebrow b{color:var(--inkp);font-weight:600;margin-right:10px}
+h2{font-family:"IBM Plex Sans",sans-serif;font-weight:700;font-size:clamp(26px,3vw,34px);line-height:1.08;letter-spacing:-.025em;margin:10px 0 12px;color:var(--inkp)}
+h2 em{font-style:normal;color:var(--burn)} h2 u{text-decoration:none;color:#b9880a} h2 s{text-decoration:none;color:#1f6fd1}
+.lede{font-family:"IBM Plex Sans",sans-serif;font-size:14.5px;color:var(--mutep);line-height:1.6}
+.lede b{color:var(--inkp);font-weight:600}
+.side{position:sticky;top:20px;align-self:start}
+.card{background:transparent;border:0;border-radius:0;padding:0}
+.steps{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--inkp)}
+.step{padding:18px 18px 22px 0;border-bottom:1px solid var(--rule);position:relative}
+.step:nth-child(odd){border-right:1px solid var(--rule);padding-right:22px}
+.step:nth-child(even){padding-left:22px}
+.step .n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--mutep);background:none;width:auto;height:auto;border-radius:0;display:block}
+.step .n:before{content:"STEP "}
+.step h4{font-family:"IBM Plex Sans",sans-serif;font-size:17px;font-weight:600;margin:8px 0 6px;letter-spacing:-.01em}
+.step p{font-family:"IBM Plex Sans",sans-serif;font-size:13.5px;color:var(--mutep);line-height:1.55}
+.step p b{color:var(--inkp);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:28px;border:1px solid var(--inkp)}
+.kpi{padding:14px 16px;border-right:1px solid var(--rule)}
+.kpi:last-child{border-right:0}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:24px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--inkp)}
+.kpi .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mutep);margin-top:6px}
+.two{display:grid;grid-template-columns:1.15fr .85fr;gap:36px;margin-top:0}
+.fig{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mutep);margin:0 0 8px}
 
-.log{margin-top:24px;padding:6px}
-.row{display:grid;grid-template-columns:54px 64px 92px minmax(120px,1fr) minmax(0,2.2fr) 70px;gap:12px;align-items:center;padding:13px 14px;border-radius:16px;font-size:13px;cursor:pointer}
-.row:hover{background:rgba(255,255,255,.035)}
-.row .id{font-family:"JetBrains Mono";color:var(--mute)}
-.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.07);color:var(--mute)}
-.tag.jev{background:rgba(157,255,90,.14);color:var(--jev)}
-.tag.burn{background:rgba(255,90,31,.16);color:var(--burn2)}.tag.bless{background:rgba(255,211,77,.16);color:var(--bless)}.tag.stash{background:rgba(111,195,255,.16);color:var(--stash2)}
-.mini{position:relative;height:8px;border-radius:9px;background:linear-gradient(90deg,var(--burn) 0,var(--burn) var(--pb),var(--bless) var(--pb),var(--bless) var(--pl),var(--stash) var(--pl),var(--stash) 100%)}
-.mini i{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;background:#fff;border-radius:2px;left:var(--tk);box-shadow:0 0 0 1.5px #000a}
-.mini+small{display:block;margin-top:5px;font-size:10.5px;color:var(--mute);font-family:"JetBrains Mono"}
-.row .what{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .what small{color:var(--mute)}
-.up{color:var(--jev)}.down{color:#ff7a7a}
-.detail{margin:0 8px 10px;padding:16px 18px;border-radius:16px;background:#080a0e;border:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--mute)}
-.detail b{color:var(--ink)} .detail a{color:var(--jev)}
-.detail pre{font-family:"JetBrains Mono";font-size:11.5px;white-space:pre-wrap;word-break:break-all;background:#0002;margin-top:8px;color:#b9c4d2}
-.ok{color:var(--jev);font-weight:700}.bad{color:#ff7a7a;font-weight:700}
-.empty{padding:34px;text-align:center;color:var(--mute);font-size:14px}
+.log{margin-top:0;padding:0;border-top:1px solid var(--inkp)}
+.row{display:grid;grid-template-columns:54px 56px 84px minmax(120px,1fr) minmax(0,2.2fr) 70px;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid var(--rule);border-radius:0;font-size:12.5px;font-family:"IBM Plex Sans",sans-serif;cursor:pointer}
+.row:hover{background:var(--rule2)}
+.row .id{font-family:"IBM Plex Mono",monospace;color:var(--mutep)}
+.row .tm{font-family:"IBM Plex Mono",monospace;color:var(--mutep)}
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:0;border:1px solid var(--rule);background:transparent;color:var(--mutep)}
+.tag.jev{border-color:var(--inkp);color:var(--inkp)}
+.tag.burn{border-color:var(--burn);color:var(--burn)}.tag.bless{border-color:#b9880a;color:#b9880a}.tag.stash{border-color:#1f6fd1;color:#1f6fd1}
+.mini{position:relative;height:6px;border-radius:0;background:linear-gradient(90deg,var(--burn) 0,var(--burn) var(--pb),var(--bless) var(--pb),var(--bless) var(--pl),var(--stash) var(--pl),var(--stash) 100%)}
+.mini i{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--inkp);border-radius:0;left:var(--tk);box-shadow:none}
+.mini+small{display:block;margin-top:5px;font-size:10.5px;color:var(--mutep);font-family:"IBM Plex Mono",monospace}
+.row .what{color:var(--inkp);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .what small{color:var(--mutep)}
+.up{color:#1f7a3a}.down{color:#c0392b}
+.detail{margin:0 0 4px;padding:16px 18px;border-radius:0;background:var(--paper2);border:1px solid var(--inkp);font-family:"IBM Plex Sans",sans-serif;font-size:13px;line-height:1.6;color:var(--mutep)}
+.detail b{color:var(--inkp)} .detail a{color:var(--accent)}
+.detail pre{font-family:"IBM Plex Mono",monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;background:var(--paper);margin-top:8px;color:#3d424d;padding:8px 10px;border:1px solid var(--rule)}
+.ok{color:#1f7a3a;font-weight:700}.bad{color:#c0392b;font-weight:700}
+.empty{padding:26px 0;color:var(--mutep);font-size:13.5px;font-family:"IBM Plex Sans",sans-serif}
 
-.board .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.board h4,.odds h4{font-family:"Unbounded";font-weight:700;font-size:15px}
-.brow{display:grid;grid-template-columns:26px 1fr auto;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;align-items:center}
-.brow a{text-decoration:none;font-family:"JetBrains Mono"}.brow a:hover{color:var(--jev)}
-.brow small{color:var(--mute)}
-.odds input{width:100%;margin-top:12px;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:#080a0e;color:var(--ink);font-family:"JetBrains Mono";font-size:12.5px;outline:none}
-.odds input:focus{border-color:var(--bless)}
-.odds .res{margin-top:14px;font-size:14px;line-height:1.6;color:var(--mute)}
-.odds .res .n{font-family:"Unbounded";font-weight:900;font-size:34px;color:var(--bless);letter-spacing:-.03em;display:block}
-.odds .res b{color:var(--ink)}
-.vs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
-.vs .card{border-top:4px solid var(--c)}
-.vs .v{font-family:"Unbounded";font-weight:900;font-size:34px;letter-spacing:-.03em;color:var(--c)}
-.vs dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-size:13px;color:var(--mute)}
-.vs dd{color:var(--ink);font-family:"JetBrains Mono";text-align:right}
-.proto{margin-top:24px;display:grid;gap:12px}
-.q{font-size:14px;line-height:1.6;color:var(--mute)}
+.board .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.board h4,.odds h4{font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:15px}
+.board>div:last-child,.brows{border-top:1px solid var(--inkp)}
+.brow{display:grid;grid-template-columns:26px 1fr auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);border-top:0;font-size:13px;font-family:"IBM Plex Sans",sans-serif;align-items:center}
+.brow a{text-decoration:none;font-family:"IBM Plex Mono",monospace;color:var(--inkp)}.brow a:hover{color:var(--accent)}
+.brow small{color:var(--mutep)}
+.odds p{font-family:"IBM Plex Sans",sans-serif}
+.odds input{width:100%;margin-top:12px;padding:12px 14px;border-radius:0;border:1px solid var(--inkp);background:var(--paper2);color:var(--inkp);font-family:"IBM Plex Mono",monospace;font-size:12.5px;outline:none}
+.odds input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,108,255,.15)}
+.odds .res{margin-top:14px;font-family:"IBM Plex Sans",sans-serif;font-size:14px;line-height:1.6;color:var(--mutep)}
+.odds .res .n{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:34px;color:var(--inkp);letter-spacing:-.03em;display:block}
+.odds .res b{color:var(--inkp)}
+.vs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:0;border:1px solid var(--inkp)}
+.vs .card{border:0;border-right:1px solid var(--rule);border-top:0;padding:16px 18px 18px}
+.vs .card:last-child{border-right:0}
+.vs .v{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:34px;letter-spacing:-.03em;color:var(--c)}
+.vs dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;color:var(--mutep)}
+.vs dd{color:var(--inkp);font-family:"IBM Plex Mono",monospace;text-align:right}
+.proto{margin-top:0;display:grid;gap:0;border:1px solid var(--inkp)}
+.q{font-family:"IBM Plex Sans",sans-serif;font-size:13.5px;line-height:1.6;color:var(--mutep);padding:16px 18px;border-bottom:1px solid var(--rule)}
+.q:last-child{border-bottom:0}
 .q .tag{margin-right:8px}
-.q blockquote{margin-top:8px;color:var(--ink)}
-.q ul{margin:10px 0 0 0;list-style:none;display:grid;gap:8px}
-.q li{padding:10px 12px;border-radius:12px;background:#080a0e;border:1px solid var(--line)}
-.q li b{font-family:"JetBrains Mono";color:var(--jev)}
-details{border-top:1px solid var(--line);padding:16px 2px}
-details:last-child{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;font-weight:700;font-size:16px;list-style:none;display:flex;justify-content:space-between;gap:12px}
-summary:after{content:"+";color:var(--jev);font-family:"JetBrains Mono"}
+.q>b{font-family:"IBM Plex Mono",monospace;color:var(--inkp)}
+.q blockquote{margin-top:8px;color:var(--inkp)}
+.q ul{margin:10px 0 0 0;list-style:none;display:grid;gap:6px}
+.q li{padding:8px 12px;border-radius:0;background:var(--paper2);border:1px solid var(--rule)}
+.q li b{font-family:"IBM Plex Mono",monospace;color:var(--inkp)}
+details{border-top:1px solid var(--rule);padding:14px 0}
+details:first-of-type{border-top:1px solid var(--inkp)}
+details:last-child{border-bottom:1px solid var(--rule)}
+summary{cursor:pointer;font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--inkp)}
+summary:after{content:"+";color:var(--mutep);font-family:"IBM Plex Mono",monospace}
 details[open] summary:after{content:"–"}
-details p{margin-top:10px;color:var(--mute);line-height:1.6;font-size:15px;max-width:820px}
-details p b{color:var(--ink)}
-footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mute);line-height:1.7}
-footer b{color:var(--ink)}
+details p{margin-top:10px;font-family:"IBM Plex Sans",sans-serif;color:var(--mutep);line-height:1.6;font-size:14px;max-width:820px}
+details p b{color:var(--inkp)}
+footer{margin-top:0;padding:22px 0 40px;border-top:2px solid var(--inkp);font-family:"IBM Plex Sans",sans-serif;font-size:12px;color:var(--mutep);line-height:1.7}
+footer b{color:var(--inkp)}
+footer .mono{font-family:"IBM Plex Mono",monospace}
 
 @media(max-width:900px){
   nav .links{display:none}
-  .steps,.kpis{grid-template-columns:1fr 1fr}
+  section{grid-template-columns:1fr;gap:22px;padding:40px 0}
+  .side{position:static}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi:nth-child(2){border-right:0}.kpi:nth-child(-n+2){border-bottom:1px solid var(--rule)}
   .two{grid-template-columns:1fr}
-  .vs{grid-template-columns:1fr}
+  .vs{grid-template-columns:1fr}.vs .card{border-right:0;border-bottom:1px solid var(--rule)}.vs .card:last-child{border-bottom:0}
   .arms{gap:8px}
   .arm{padding:12px 10px 12px 14px;border-radius:18px}
   .arm h3{font-size:10px}.arm h3 small,.arm .pv{display:none}
@@ -176,7 +200,7 @@ footer b{color:var(--ink)}
   .btn{padding:10px 14px;font-size:11px}
   .dlab{font-size:10px}
 }
-@media(max-width:520px){.icon{display:none}.brand b{font-size:15px}.brand svg{width:32px;height:32px}.steps{grid-template-columns:1fr}nav{gap:8px}nav .sp{display:none}.ca{flex:1;min-width:0;max-width:none;padding:8px 10px}.btn{padding:10px 12px}.arm p{display:none}}
+@media(max-width:520px){.icon{display:none}.brand b{font-size:15px}.brand svg{width:32px;height:32px}.steps{grid-template-columns:1fr}.step:nth-child(odd){border-right:0;padding-right:0}.step:nth-child(even){padding-left:0}.rhead{flex-direction:column;align-items:flex-start;gap:4px}nav{gap:8px}nav .sp{display:none}.ca{flex:1;min-width:0;max-width:none;padding:8px 10px}.btn{padding:10px 12px}.arm p{display:none}}
 /* og / share-card mode (?og=1) */
 body.og nav .links,body.og .ca,body.og .btn,body.og .clock,body.og .foot,body.og .toast{display:none}
 body.og .ogt{display:block}
@@ -243,81 +267,112 @@ body.og .ogt{display:block}
   </div>
 </header>
 
+<div class="report">
 <main>
+  <div class="rhead"><span><b>LABRAT</b> lab report · subject 001 · box A</span><span id="rheadMeta">one pull every 180 s · brain: Jev (TypeSafe AI System One) · dice: Solana blockhash</span></div>
+
   <section id="how">
-    <div class="eyebrow">the experiment</div>
-    <h2>One rat. Three levers.<br><em>Burn</em>, <u>bless</u> or <s>stash</s>.</h2>
-    <p class="lede">A Skinner box with a treasury in it. <b>LABRAT is a lab rat whose brain is Jev</b> — a decision model that answers typed questions with calibrated probabilities in milliseconds. Every 3 minutes the rat is shown the tape and pulls one of three levers with the coin's creator fees: the burner, the cheese, or the nest.</p>
-    <div class="steps">
-      <div class="card step"><div class="n">1</div><h4>The pot fills</h4><p>Every trade of the coin on pump.fun pays creator fees. They pile up in a vault. <b>That is the pot</b> — nothing else is ever spent.</p></div>
-      <div class="card step"><div class="n">2</div><h4>Jev sets the odds</h4><p>The engine shows Jev the tape, the holders and how past pulls went, and asks: which lever? Jev answers with <b>P(burn)</b>, <b>P(bless)</b> and <b>P(stash)</b>.</p></div>
-      <div class="card step"><div class="n">3</div><h4>A block pulls it</h4><p>The hash of the newest finalized Solana block is the dice. Nobody knows it in advance, <b>anyone can recompute the roll</b> afterwards.</p></div>
-      <div class="card step"><div class="n">4</div><h4>The rat obeys</h4><p><b>🔥 Burn</b>: claim → one buy → burn. <b>🧀 Bless</b>: claim → one buy → all of it to one holder, odds = their share. <b>🕳 Stash</b>: nothing moves, the pot rolls over and the next pull is bigger.</p></div>
+    <div class="side">
+      <div class="eyebrow"><b>§01</b>the experiment</div>
+      <h2>One rat. Three levers. <em>Burn</em>, <u>bless</u> or <s>stash</s>.</h2>
+      <p class="lede">A Skinner box with a treasury in it. <b>LABRAT is a lab rat whose brain is Jev</b>, a decision model that answers typed questions with calibrated probabilities in milliseconds. Every 3 minutes the rat is shown the tape and pulls one of three levers with the coin's creator fees: the burner, the cheese, or the nest.</p>
     </div>
-    <div class="kpis">
-      <div class="card kpi"><div class="v" id="kTrials">0</div><div class="k">lever pulls</div></div>
-      <div class="card kpi"><div class="v" id="kBurned" style="color:var(--burn)">0</div><div class="k">tokens burned</div></div>
-      <div class="card kpi"><div class="v" id="kBlessed" style="color:var(--bless)">0</div><div class="k">tokens given to holders</div></div>
-      <div class="card kpi"><div class="v" id="kUsd">$0</div><div class="k">fees turned into buybacks</div></div>
+    <div>
+      <div class="fig">fig. 1 — the procedure</div>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h4>The pot fills</h4><p>Every trade of the coin on pump.fun pays creator fees. They pile up in a vault. <b>That is the pot</b>, nothing else is ever spent.</p></div>
+        <div class="step"><div class="n">2</div><h4>Jev sets the odds</h4><p>The engine shows Jev the tape, the holders and how past pulls went, and asks: which lever? Jev answers with <b>P(burn)</b>, <b>P(bless)</b> and <b>P(stash)</b>.</p></div>
+        <div class="step"><div class="n">3</div><h4>A block pulls it</h4><p>The hash of the newest finalized Solana block is the dice. Nobody knows it in advance, <b>anyone can recompute the roll</b> afterwards.</p></div>
+        <div class="step"><div class="n">4</div><h4>The rat obeys</h4><p><b>Burn</b>: claim → one buy → burn. <b>Bless</b>: claim → one buy → all of it to one holder, odds = their share. <b>Stash</b>: nothing moves, the pot rolls over and the next pull is bigger.</p></div>
+      </div>
+      <div class="fig" style="margin-top:28px">table 1 — readouts</div>
+      <div class="kpis" style="margin-top:0">
+        <div class="kpi"><div class="v" id="kTrials">0</div><div class="k">lever pulls</div></div>
+        <div class="kpi"><div class="v" id="kBurned" style="color:var(--burn)">0</div><div class="k">tokens burned</div></div>
+        <div class="kpi"><div class="v" id="kBlessed" style="color:#b9880a">0</div><div class="k">tokens given to holders</div></div>
+        <div class="kpi"><div class="v" id="kUsd">$0</div><div class="k">fees turned into buybacks</div></div>
+      </div>
     </div>
   </section>
 
   <section id="log">
-    <div class="eyebrow">lab log</div>
-    <h2>Every pull, with receipts.</h2>
-    <p class="lede">Tap a row to see what the brain saw, the odds it set, the block that rolled them — your browser <b>recomputes the roll</b> on the spot.</p>
-    <div class="card log" id="logBox"><div class="empty">no pulls yet — the first one lands when the countdown hits zero.</div></div>
+    <div class="side">
+      <div class="eyebrow"><b>§02</b>lab log</div>
+      <h2>Every pull, with receipts.</h2>
+      <p class="lede">Click a row to see what the brain saw, the odds it set, the block that rolled them. Your browser <b>recomputes the roll</b> on the spot.</p>
+    </div>
+    <div>
+      <div class="fig">table 2 — trials, newest first</div>
+      <div class="log" id="logBox"><div class="empty">no pulls yet. The first one lands when the countdown hits zero.</div></div>
+    </div>
   </section>
 
   <section id="blessed">
-    <div class="eyebrow">the blessed</div>
-    <h2>Your bag is <u>your odds</u>.</h2>
-    <p class="lede">When the rat pulls the cheese lever, one wallet gets the entire buyback. The draw is weighted: hold <b>2%</b> of the tokens in the draw, get picked <b>2%</b> of the time. The top <span id="topN">100</span> real wallets are in — the bonding curve, pools and the engine wallet are not.</p>
+    <div class="side">
+      <div class="eyebrow"><b>§03</b>the blessed</div>
+      <h2>Your bag is <u>your odds</u>.</h2>
+      <p class="lede">When the rat pulls the cheese lever, one wallet gets the entire buyback. The draw is weighted: hold <b>2%</b> of the tokens in the draw, get picked <b>2%</b> of the time. The top <span id="topN">100</span> real wallets are in. The bonding curve, pools and the engine wallet are not.</p>
+    </div>
     <div class="two">
-      <div class="card board"><div class="h"><h4>Wallets the rat has fed</h4><small class="mono" id="boardN" style="color:var(--mute)"></small></div><div id="board"><div class="empty">nobody yet.</div></div></div>
-      <div class="card odds"><h4>What are my odds?</h4><p style="color:var(--mute);font-size:13.5px;margin-top:6px">Paste a wallet. Read-only — nothing to connect, nothing to sign.</p>
+      <div class="board"><div class="fig">table 3 — wallets the rat has fed <span class="mono" id="boardN"></span></div><div id="board"><div class="empty">nobody yet.</div></div></div>
+      <div class="odds"><div class="fig">instrument — odds checker</div><p style="color:var(--mutep);font-size:13.5px;margin-top:6px">Paste a wallet. Read-only: nothing to connect, nothing to sign.</p>
         <input id="oddsIn" placeholder="your Solana wallet address" spellcheck="false" autocomplete="off">
         <div class="res" id="oddsRes"></div>
-        <div id="oddsTop" style="margin-top:14px"></div>
+        <div id="oddsTop" class="brows" style="margin-top:14px"></div>
       </div>
     </div>
   </section>
 
   <section id="results">
-    <div class="eyebrow">results so far</div>
-    <h2>Which lever works?</h2>
-    <p class="lede">One interval after every pull the engine writes down where the price went. Jev gets these numbers back as feedback on the next question.</p>
-    <div class="vs">
-      <div class="card" style="--c:var(--burn)"><div class="tag burn">🔥 burn</div><div class="v" id="rBurn" style="margin-top:10px">—</div><dl id="rBurnDl"></dl></div>
-      <div class="card" style="--c:var(--bless)"><div class="tag bless">🧀 bless</div><div class="v" id="rBless" style="margin-top:10px">—</div><dl id="rBlessDl"></dl></div>
-      <div class="card" style="--c:var(--stash)"><div class="tag stash">🕳 stash</div><div class="v" id="rStash" style="margin-top:10px">—</div><dl id="rStashDl"></dl></div>
+    <div class="side">
+      <div class="eyebrow"><b>§04</b>results so far</div>
+      <h2>Which lever works?</h2>
+      <p class="lede">One interval after every pull the engine writes down where the price went. Jev gets these numbers back as feedback on the next question.</p>
+    </div>
+    <div>
+      <div class="fig">table 4 — price move one interval after each lever</div>
+      <div class="vs">
+        <div class="card" style="--c:var(--burn)"><span class="tag burn">burn</span><div class="v" id="rBurn" style="margin-top:10px">—</div><dl id="rBurnDl"></dl></div>
+        <div class="card" style="--c:#b9880a"><span class="tag bless">bless</span><div class="v" id="rBless" style="margin-top:10px">—</div><dl id="rBlessDl"></dl></div>
+        <div class="card" style="--c:#1f6fd1"><span class="tag stash">stash</span><div class="v" id="rStash" style="margin-top:10px">—</div><dl id="rStashDl"></dl></div>
+      </div>
     </div>
   </section>
 
   <section id="protocol">
-    <div class="eyebrow">the protocol</div>
-    <h2>The exact words the brain hears.</h2>
-    <p class="lede">Jev does not chat. It gets a small numeric <b>state</b> and these typed questions, and returns probabilities. The questions below are read live from the engine (<span class="mono">/api/protocol</span>).</p>
-    <div class="proto" id="proto"></div>
+    <div class="side">
+      <div class="eyebrow"><b>§05</b>the protocol</div>
+      <h2>The exact words the brain hears.</h2>
+      <p class="lede">Jev does not chat. It gets a small numeric <b>state</b> and these typed questions, and returns probabilities. The questions below are read live from the engine (<span class="mono">/api/protocol</span>).</p>
+    </div>
+    <div>
+      <div class="fig">appendix a — questions and dice, verbatim</div>
+      <div class="proto" id="proto"></div>
+    </div>
   </section>
 
   <section id="faq">
-    <div class="eyebrow">faq</div>
-    <h2>Questions.</h2>
-    <details><summary>Is it a real rat?</summary><p><b>No.</b> The rat is a 3D model. Its "brain" is <b>Jev</b>, TypeSafe AI's System One decision model, called over an API once per trial. No animal was involved. The box is a nod to the Skinner box — here the levers move money instead of pellets.</p></details>
-    <details><summary>Does Jev decide, or is it random?</summary><p><b>Both, on purpose.</b> Jev sets the odds — if it answers P(burn) 50%, P(bless) 30%, P(stash) 20%, that is how the bar is split. A finalized Solana block then rolls a number across that bar. Jev shifts the odds with the market; the block keeps anyone — us included — from choosing the outcome. If Jev cannot be reached, every lever gets equal odds and the row is tagged <b>instinct</b>, never Jev.</p></details>
-    <details><summary>What does STASH actually do?</summary><p>Nothing on chain. No claim, no buy. The pot keeps growing and the next lever pull spends all of it, so a stash is a bigger burn or a bigger blessing later. The rat hoards. Jev is told to prefer it when the pot is small next to the market cap or the tape is dead — a tiny buy there changes nothing.</p></details>
-    <details><summary>How is the blessed holder picked?</summary><p>Before the block is read, the engine snapshots the top real wallets and their balances. Then <span class="mono">sha256(blockhash:trialId:bless)</span> becomes a ticket between 0 and the sum of those balances, and the wallet whose slice contains the ticket wins. Bigger bag, bigger slice. The snapshot is stored with the trial — open any bless row and your browser re-runs the draw.</p></details>
-    <details><summary>Which wallets are excluded?</summary><p>Accounts owned by programs (the bonding curve, the PumpSwap pool, lockers), and the engine's own wallet. Only wallets in the top N by balance are in the draw, so dust accounts cannot farm it.</p></details>
-    <details><summary>Where does the money come from?</summary><p>Only from the coin's <b>creator fees</b> on pump.fun. The engine keeps its own ledger: it spends only what it claimed and only burns or gives away what it bought in that trial. It never touches anything else in the wallet.</p></details>
-    <details><summary>Do I need to do anything to be blessed?</summary><p>Hold the coin in a normal wallet. That's it. Blessings arrive as a plain token transfer — <b>never sign or "claim" anything</b>; anyone asking you to is a scammer.</p></details>
+    <div class="side">
+      <div class="eyebrow"><b>§06</b>notes</div>
+      <h2>Questions.</h2>
+    </div>
+    <div>
+      <details><summary>Is it a real rat?</summary><p><b>No.</b> The rat is a 3D model. Its "brain" is <b>Jev</b>, TypeSafe AI's System One decision model, called over an API once per trial. No animal was involved. The box is a nod to the Skinner box: here the levers move money instead of pellets.</p></details>
+      <details><summary>Does Jev decide, or is it random?</summary><p><b>Both, on purpose.</b> Jev sets the odds. If it answers P(burn) 50%, P(bless) 30%, P(stash) 20%, that is how the bar is split. A finalized Solana block then rolls a number across that bar. Jev shifts the odds with the market; the block keeps anyone, us included, from choosing the outcome. If Jev cannot be reached, every lever gets equal odds and the row is tagged <b>instinct</b>, never Jev.</p></details>
+      <details><summary>What does STASH actually do?</summary><p>Nothing on chain. No claim, no buy. The pot keeps growing and the next lever pull spends all of it, so a stash is a bigger burn or a bigger blessing later. The rat hoards. Jev is told to prefer it when the pot is small next to the market cap or the tape is dead, where a tiny buy would change nothing.</p></details>
+      <details><summary>How is the blessed holder picked?</summary><p>Before the block is read, the engine snapshots the top real wallets and their balances. Then <span class="mono">sha256(blockhash:trialId:bless)</span> becomes a ticket between 0 and the sum of those balances, and the wallet whose slice contains the ticket wins. Bigger bag, bigger slice. The snapshot is stored with the trial: open any bless row and your browser re-runs the draw.</p></details>
+      <details><summary>Which wallets are excluded?</summary><p>Accounts owned by programs (the bonding curve, the PumpSwap pool, lockers), and the engine's own wallet. Only wallets in the top N by balance are in the draw, so dust accounts cannot farm it.</p></details>
+      <details><summary>Where does the money come from?</summary><p>Only from the coin's <b>creator fees</b> on pump.fun. The engine keeps its own ledger: it spends only what it claimed and only burns or gives away what it bought in that trial. It never touches anything else in the wallet.</p></details>
+      <details><summary>Do I need to do anything to be blessed?</summary><p>Hold the coin in a normal wallet. That's it. Blessings arrive as a plain token transfer. <b>Never sign or "claim" anything</b>; anyone asking you to is a scammer.</p></details>
+    </div>
   </section>
 
   <footer>
-    <b>LABRAT</b> is an entertainment experiment on Solana, not an investment and not a promise of returns; a blessing is a lottery-style reward paid from trading fees and most holders will never receive one. Not affiliated with TypeSafe AI or the $JEV coin. "Jev" names the model the engine calls; rows tagged <span class="mono">instinct</span> were not answered by it. Memecoins are volatile — don't buy what you can't afford to lose.
+    <b>LABRAT</b> is an entertainment experiment on Solana, not an investment and not a promise of returns; a blessing is a lottery-style reward paid from trading fees and most holders will never receive one. Not affiliated with TypeSafe AI or the $JEV coin. "Jev" names the model the engine calls; rows tagged <span class="mono">instinct</span> were not answered by it. Memecoins are volatile. Don't buy what you can't afford to lose.
     <div style="margin-top:10px" class="mono" id="footMeta"></div>
   </footer>
 </main>
+</div>
 
 <script type="module">
 import * as THREE from "three";
@@ -799,6 +854,7 @@ function renderToken() {
   $("kTrials").textContent = num(tot.trials); $("kBurned").textContent = big(t.dryRun ? tot.burned : Math.max(tot.burned, t.burned)); $("kBlessed").textContent = big(tot.blessed); $("kUsd").textContent = `$${num(tot.spentUsd, 0)}`;
   const l = t.lastTrial; if (l?.probs && !(t.progress && OPEN.includes(t.progress.status))) setOdds(l.probs, false);
   if (l?.action === "bless" && l.winner) $("blessLine").innerHTML = `last: <b class="mono">${short(l.winner)}</b> got <b>${big(l.tokensBlessed)}</b> with ${Number(l.winnerPct || 0).toFixed(2)}% odds`;
+  $("rheadMeta").textContent = `one pull every ${t.rules.intervalSec} s · brain: ${t.jev?.online ? `Jev (${t.jev.model})` : "instinct"} · dice: Solana blockhash · engine ${t.mode}${t.dryRun ? " · dry" : ""}`;
   $("footMeta").textContent = `engine ${t.mode}${t.dryRun ? " · dry run" : ""} · wallet ${short(t.wallet)} · mcap $${big(t.mcapUsd)} · one pull every ${t.rules.intervalSec}s`;
 }
 
