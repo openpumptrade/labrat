@@ -99,10 +99,35 @@ const FRONTEND = "https://frontend-api-v3.pump.fun";
 const SWAP_API = "https://swap-api.pump.fun";
 const UA = { accept: "application/json", "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128 Safari/537.36" };
 
+/// Coin info in pump.fun's frontend shape. pump.fun removed `GET /coins/<mint>` from
+/// frontend-api-v3 (404 for every mint since late Sep 2026), so DexScreener is the
+/// fallback — it indexes pump.fun curves (dexId "pumpfun") and PumpSwap pools
+/// ("pumpswap") within seconds of the first trade. Mapped to the same field names.
+let coinInfoSource = "";
 export async function fetchCoinInfo(mint) {
-  const res = await fetch(`${FRONTEND}/coins/${mint}`, { headers: UA, signal: AbortSignal.timeout(10_000) });
-  if (!res.ok) throw new Error(`coins/${mint} → ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${FRONTEND}/coins/${mint}`, { headers: UA, signal: AbortSignal.timeout(10_000) });
+    if (res.ok) { coinInfoSource = "pump.fun"; return res.json(); }
+  } catch { /* fall through */ }
+  const res = await fetch(`https://api.dexscreener.com/tokens/v1/solana/${mint}`, { headers: UA, signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error(`coins/${mint}: pump.fun 404 and dexscreener → ${res.status}`);
+  const pairs = (await res.json()).filter((p) => p.chainId === "solana" && p.baseToken?.address === mint);
+  if (!pairs.length) throw new Error(`coins/${mint}: not on pump.fun's API nor on DexScreener yet (no trades?)`);
+  const pool = pairs.find((p) => p.dexId === "pumpswap");
+  const curve = pairs.find((p) => p.dexId === "pumpfun");
+  const main = pool || curve || pairs[0];
+  const priceUsd = Number(main.priceUsd || 0);
+  if (coinInfoSource !== "dexscreener") { coinInfoSource = "dexscreener"; console.log(`[pumpfun] coin info via DexScreener (pump.fun's /coins/<mint> is gone)`); }
+  return {
+    mint, name: String(main.baseToken?.name || "").trim(), symbol: String(main.baseToken?.symbol || "").trim(),
+    image_uri: main.info?.imageUrl || "", description: "",
+    usd_market_cap: priceUsd * 1e9,                    // pump.fun's convention: price × the 1B mint supply
+    price_usd: priceUsd,
+    complete: pool ? true : undefined,                 // unknown on a curve pair — the on-chain curve decides
+    pump_swap_pool: pool ? pool.pairAddress : "",
+    created_timestamp: Number((curve || main).pairCreatedAt || 0),
+    reply_count: 0, source: "dexscreener",
+  };
 }
 
 /// interval: "1m" | "5m" | "15m" | "1h" — prices already in USD

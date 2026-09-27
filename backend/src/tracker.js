@@ -42,7 +42,7 @@ let walletPk = "";
 export function engineWallet() { return walletPk; }
 
 export async function loadCoin() {
-  const [info, curve] = await Promise.all([fetchCoinInfo(config.mint), loadCurve(config.mint)]);
+  const [info, curve] = await Promise.all([fetchCoinInfo(config.mint).catch((e) => { console.warn(`[tracker] coin info unavailable (${e.message}) — booting from the curve only`); return {}; }), loadCurve(config.mint)]);
   coin.mint = config.mint;
   coin.name = info.name || "";
   coin.symbol = info.symbol || "";
