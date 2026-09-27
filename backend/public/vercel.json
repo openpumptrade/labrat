@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://RAILWAY_ENGINE_URL/api/$1" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [{ "key": "cache-control", "value": "no-store" }] }
+  ]
+}

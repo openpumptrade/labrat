@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LABRAT — a lab rat with Jev for a brain. Burn, bless or stash, every 3 minutes.</title>
+<meta name="description" content="A 3D lab rat wired to Jev. Every 3 minutes it pulls one of three levers with the coin's creator fees: buy & burn, buy & bless one random holder (your bag is your odds), or stash the pot so the next pull is bigger. Every roll is verifiable on Solana.">
+<meta property="og:title" content="LABRAT — burn, bless or stash, every 3 minutes">
+<meta property="og:description" content="A lab rat with Jev for a brain. Three levers, one pot of creator fees, a Solana block as dice. Your bag is your odds.">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<style>
+:root{--bg:#090b10;--bg2:#0f131a;--panel:rgba(15,19,26,.76);--line:rgba(236,240,246,.1);--ink:#eef1f6;--mute:#8f99a8;--burn:#ff5a1f;--burn2:#ffb08a;--bless:#ffd34d;--bless2:#fff1b8;--stash:#6fc3ff;--stash2:#cfe9ff;--jev:#9dff5a;--r:22px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{font-family:"DM Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.mono{font-family:"JetBrains Mono",monospace}
+.disp{font-family:"Unbounded",sans-serif;letter-spacing:-.02em}
+
+/* ------------------------------------------------ hero / the box */
+#hero{position:relative;height:100svh;min-height:640px;overflow:hidden;background:radial-gradient(120% 90% at 50% 30%,#151b26 0%,var(--bg) 60%)}
+#stage{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 18px 16px}
+.hud>*{pointer-events:auto}
+nav{display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand svg{width:38px;height:38px}
+.brand b{font-family:"Unbounded";font-weight:900;font-size:18px;letter-spacing:-.03em}
+.brand b i{font-style:normal;color:var(--jev)}
+nav .links{display:flex;gap:4px;margin-left:10px}
+nav .links a{font-size:13px;font-weight:500;color:var(--mute);text-decoration:none;padding:7px 11px;border-radius:99px}
+nav .links a:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+nav .sp{flex:1}
+.ca{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 12px;border-radius:99px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);max-width:46vw}
+.ca span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ca em{font-style:normal;color:var(--jev);font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:"Unbounded";font-weight:700;font-size:12px;padding:11px 18px;border-radius:99px;background:var(--jev);color:#08130a;text-decoration:none;white-space:nowrap;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.icon{width:36px;height:36px;border-radius:99px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);text-decoration:none;font-size:14px}
+
+.clock{align-self:center;text-align:center;margin-top:min(3vh,22px)}
+.clock .lbl{font-size:11px;letter-spacing:.22em;color:var(--mute);text-transform:uppercase}
+.clock .t{font-family:"Unbounded";font-weight:900;font-size:clamp(44px,8.5vw,104px);line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums;text-shadow:0 0 40px rgba(157,255,90,.12)}
+.clock .t.hot{color:var(--jev)}
+.status{margin-top:8px;font-size:14px;color:var(--mute);min-height:20px}
+.status b{color:var(--ink);font-weight:700}
+.dice{margin:12px auto 0;width:min(480px,86vw);opacity:0;transform:translateY(-6px);transition:.4s}
+.dice.on{opacity:1;transform:none}
+.dbar{position:relative;height:16px;border-radius:99px;overflow:visible;background:linear-gradient(90deg,var(--burn) 0,var(--burn) var(--pb,33%),var(--bless) var(--pb,33%),var(--bless) var(--pl,66%),var(--stash) var(--pl,66%),var(--stash) 100%);box-shadow:0 0 0 1px rgba(0,0,0,.4) inset}
+.dbar i{position:absolute;top:-7px;bottom:-7px;width:4px;margin-left:-2px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px #0008,0 0 14px #fff;left:var(--tk,50%);transition:left 1.1s cubic-bezier(.2,1.4,.4,1)}
+.dlab{display:flex;justify-content:space-between;font-size:11px;margin-top:7px;color:var(--mute);gap:8px}
+.dlab b{color:var(--ink)}
+
+.toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;text-align:center;transition:.45s cubic-bezier(.2,1.3,.4,1);width:min(92vw,760px)}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.toast .big{font-family:"Unbounded";font-weight:900;font-size:clamp(34px,7vw,84px);line-height:.95;letter-spacing:-.04em}
+.toast.burn .big{color:var(--burn);text-shadow:0 0 50px rgba(255,90,31,.6)}
+.toast.bless .big{color:var(--bless);text-shadow:0 0 50px rgba(255,211,77,.6)}
+.toast.stash .big{color:var(--stash);text-shadow:0 0 50px rgba(111,195,255,.6)}
+.toast .sub{margin-top:10px;font-size:15px;color:var(--ink)}
+.toast .sub .mono{background:#0009;padding:3px 8px;border-radius:8px}
+
+.foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.mid{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.arms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.arm{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:.3s;min-width:0}
+.arm:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--c)}
+.arm.burn{--c:var(--burn)}.arm.bless{--c:var(--bless)}.arm.stash{--c:var(--stash)}
+.arm.win{box-shadow:0 0 0 1px var(--c),0 0 50px -10px var(--c)}
+.arm h3{font-family:"Unbounded";font-weight:700;font-size:13px;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.arm h3 small{margin-left:auto;font-family:"DM Sans";font-weight:500;font-size:11px;color:var(--mute);white-space:nowrap}
+.arm .pct{font-family:"Unbounded";font-weight:900;font-size:40px;letter-spacing:-.04em;color:var(--c);line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+.arm .pct small{font-family:"DM Sans";font-size:12px;font-weight:500;color:var(--mute);letter-spacing:0;margin-left:6px}
+.arm p{font-size:12.5px;color:var(--mute);margin-top:4px;line-height:1.45}
+.arm p b{color:var(--ink)}
+.arm .pv{position:absolute;right:12px;bottom:12px;font-size:11px;color:var(--mute);padding:5px 10px;border-radius:99px;border:1px solid var(--line)}
+.arm .pv:hover{color:var(--ink);border-color:var(--c)}
+.pill{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;padding:8px 14px;border-radius:99px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(10px);color:var(--mute)}
+.pill b{color:var(--ink)}
+.pill .led{width:8px;height:8px;border-radius:9px;background:var(--mute)}
+.pill .led.on{background:var(--jev);box-shadow:0 0 10px var(--jev);animation:led 1.4s infinite}
+@keyframes led{50%{opacity:.35}}
+
+/* ------------------------------------------------ below the box */
+main{max-width:1160px;margin:0 auto;padding:0 18px 80px}
+section{padding-top:84px}
+.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--jev)}
+h2{font-family:"Unbounded";font-weight:900;font-size:clamp(28px,4.6vw,52px);line-height:1.02;letter-spacing:-.04em;margin:10px 0 14px}
+h2 em{font-style:normal;color:var(--burn)} h2 u{text-decoration:none;color:var(--bless)} h2 s{text-decoration:none;color:var(--stash)}
+.lede{font-size:17px;color:var(--mute);max-width:760px;line-height:1.55}
+.lede b{color:var(--ink)}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.step .n{font-family:"Unbounded";font-weight:900;font-size:13px;color:var(--bg);background:var(--jev);width:30px;height:30px;border-radius:10px;display:grid;place-items:center}
+.step h4{font-family:"Unbounded";font-size:15px;font-weight:700;margin:14px 0 6px}
+.step p{font-size:14px;color:var(--mute);line-height:1.5}
+.step p b{color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+.kpi .v{font-family:"Unbounded";font-weight:900;font-size:26px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .k{font-size:12px;color:var(--mute);margin-top:4px}
+.two{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin-top:24px}
+
+.log{margin-top:24px;padding:6px}
+.row{display:grid;grid-template-columns:54px 64px 92px minmax(120px,1fr) minmax(0,2.2fr) 70px;gap:12px;align-items:center;padding:13px 14px;border-radius:16px;font-size:13px;cursor:pointer}
+.row:hover{background:rgba(255,255,255,.035)}
+.row .id{font-family:"JetBrains Mono";color:var(--mute)}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.07);color:var(--mute)}
+.tag.jev{background:rgba(157,255,90,.14);color:var(--jev)}
+.tag.burn{background:rgba(255,90,31,.16);color:var(--burn2)}.tag.bless{background:rgba(255,211,77,.16);color:var(--bless)}.tag.stash{background:rgba(111,195,255,.16);color:var(--stash2)}
+.mini{position:relative;height:8px;border-radius:9px;background:linear-gradient(90deg,var(--burn) 0,var(--burn) var(--pb),var(--bless) var(--pb),var(--bless) var(--pl),var(--stash) var(--pl),var(--stash) 100%)}
+.mini i{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;background:#fff;border-radius:2px;left:var(--tk);box-shadow:0 0 0 1.5px #000a}
+.mini+small{display:block;margin-top:5px;font-size:10.5px;color:var(--mute);font-family:"JetBrains Mono"}
+.row .what{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .what small{color:var(--mute)}
+.up{color:var(--jev)}.down{color:#ff7a7a}
+.detail{margin:0 8px 10px;padding:16px 18px;border-radius:16px;background:#080a0e;border:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--mute)}
+.detail b{color:var(--ink)} .detail a{color:var(--jev)}
+.detail pre{font-family:"JetBrains Mono";font-size:11.5px;white-space:pre-wrap;word-break:break-all;background:#0002;margin-top:8px;color:#b9c4d2}
+.ok{color:var(--jev);font-weight:700}.bad{color:#ff7a7a;font-weight:700}
+.empty{padding:34px;text-align:center;color:var(--mute);font-size:14px}
+
+.board .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.board h4,.odds h4{font-family:"Unbounded";font-weight:700;font-size:15px}
+.brow{display:grid;grid-template-columns:26px 1fr auto;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;align-items:center}
+.brow a{text-decoration:none;font-family:"JetBrains Mono"}.brow a:hover{color:var(--jev)}
+.brow small{color:var(--mute)}
+.odds input{width:100%;margin-top:12px;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:#080a0e;color:var(--ink);font-family:"JetBrains Mono";font-size:12.5px;outline:none}
+.odds input:focus{border-color:var(--bless)}
+.odds .res{margin-top:14px;font-size:14px;line-height:1.6;color:var(--mute)}
+.odds .res .n{font-family:"Unbounded";font-weight:900;font-size:34px;color:var(--bless);letter-spacing:-.03em;display:block}
+.odds .res b{color:var(--ink)}
+.vs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
+.vs .card{border-top:4px solid var(--c)}
+.vs .v{font-family:"Unbounded";font-weight:900;font-size:34px;letter-spacing:-.03em;color:var(--c)}
+.vs dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font-size:13px;color:var(--mute)}
+.vs dd{color:var(--ink);font-family:"JetBrains Mono";text-align:right}
+.proto{margin-top:24px;display:grid;gap:12px}
+.q{font-size:14px;line-height:1.6;color:var(--mute)}
+.q .tag{margin-right:8px}
+.q blockquote{margin-top:8px;color:var(--ink)}
+.q ul{margin:10px 0 0 0;list-style:none;display:grid;gap:8px}
+.q li{padding:10px 12px;border-radius:12px;background:#080a0e;border:1px solid var(--line)}
+.q li b{font-family:"JetBrains Mono";color:var(--jev)}
+details{border-top:1px solid var(--line);padding:16px 2px}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:700;font-size:16px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary:after{content:"+";color:var(--jev);font-family:"JetBrains Mono"}
+details[open] summary:after{content:"–"}
+details p{margin-top:10px;color:var(--mute);line-height:1.6;font-size:15px;max-width:820px}
+details p b{color:var(--ink)}
+footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mute);line-height:1.7}
+footer b{color:var(--ink)}
+
+@media(max-width:900px){
+  nav .links{display:none}
+  .steps,.kpis{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+  .vs{grid-template-columns:1fr}
+  .arms{gap:8px}
+  .arm{padding:12px 10px 12px 14px;border-radius:18px}
+  .arm h3{font-size:10px}.arm h3 small,.arm .pv{display:none}
+  .arm .pct{font-size:26px}.arm .pct small{display:block;margin:0}
+  .arm p{font-size:11px}
+  .row{grid-template-columns:40px 1fr 74px;gap:8px;row-gap:8px}
+  .row .tm,.row .br{display:none}
+  .row .bar{grid-column:1/-1;order:5}
+  .row .what{grid-column:2/3;white-space:normal}
+  .ca{max-width:38vw}
+  .btn{padding:10px 14px;font-size:11px}
+  .dlab{font-size:10px}
+}
+@media(max-width:520px){.icon{display:none}.brand b{font-size:15px}.brand svg{width:32px;height:32px}.steps{grid-template-columns:1fr}nav{gap:8px}nav .sp{display:none}.ca{flex:1;min-width:0;max-width:none;padding:8px 10px}.btn{padding:10px 12px}.arm p{display:none}}
+/* og / share-card mode (?og=1) */
+body.og nav .links,body.og .ca,body.og .btn,body.og .clock,body.og .foot,body.og .toast{display:none}
+body.og .ogt{display:block}
+.ogt{display:none;position:absolute;left:54px;bottom:46px;font-family:"Unbounded";font-weight:900;font-size:60px;line-height:.98;letter-spacing:-.04em}
+.ogt small{display:block;font-family:"DM Sans";font-weight:500;font-size:24px;letter-spacing:0;color:var(--mute);margin-top:14px}
+.ogt em{font-style:normal;color:var(--burn)}.ogt u{text-decoration:none;color:var(--bless)}.ogt s{text-decoration:none;color:var(--stash)}
+</style>
+</head>
+<body>
+
+<header id="hero">
+  <canvas id="stage"></canvas>
+  <div class="hud">
+    <nav>
+      <a class="brand" href="#hero" aria-label="LABRAT">
+        <svg viewBox="0 0 64 64"><g stroke="#0b0d12" stroke-width="2.4" stroke-linejoin="round"><circle cx="16" cy="18" r="11" fill="#f4efe6"/><circle cx="16" cy="18" r="6" fill="#f4a9b8"/><circle cx="48" cy="18" r="11" fill="#f4efe6"/><circle cx="48" cy="18" r="6" fill="#f4a9b8"/><path d="M12 30 C12 18 52 18 52 30 C52 44 42 56 32 56 C22 56 12 44 12 30 Z" fill="#f4efe6"/><circle cx="24" cy="34" r="3.6" fill="#d3183a"/><circle cx="40" cy="34" r="3.6" fill="#d3183a"/><ellipse cx="32" cy="47" rx="3.4" ry="2.4" fill="#f4a9b8"/></g><path d="M18 46 L6 44 M18 48 L7 51 M46 46 L58 44 M46 48 L57 51" stroke="#eef1f6" stroke-width="1.3" stroke-linecap="round"/><rect x="27" y="18" width="10" height="4" rx="1.5" fill="#0b0d12"/><circle cx="30" cy="20" r="1.3" fill="#9dff5a"/></svg>
+        <b>LAB<i>RAT</i></b>
+      </a>
+      <div class="links"><a href="#how">How it works</a><a href="#log">Lab log</a><a href="#blessed">The blessed</a><a href="#results">Results</a><a href="#protocol">Protocol</a><a href="#faq">FAQ</a></div>
+      <div class="sp"></div>
+      <button class="ca mono" id="ca" title="copy contract address"><em>CA</em><span id="caText">launching soon</span></button>
+      <a class="icon" id="xLink" href="#" target="_blank" rel="noopener" hidden>𝕏</a>
+      <a class="icon" id="tgLink" href="#" target="_blank" rel="noopener" hidden>✈</a>
+      <a class="btn" id="buy" href="https://pump.fun" target="_blank" rel="noopener">Buy $LABRAT</a>
+    </nav>
+
+    <div class="clock">
+      <div class="lbl" id="clockLbl">next lever pull in</div>
+      <div class="t" id="clock">--:--</div>
+      <div class="status" id="status">waking the rat…</div>
+      <div class="dice" id="dice"><div class="dbar" id="dbar"><i></i></div><div class="dlab"><span>🔥 burn <b id="dPb">33%</b></span><span>🧀 bless <b id="dPl">33%</b></span><span id="dRoll" class="mono"></span><span>🕳 stash <b id="dPs">33%</b></span></div></div>
+    </div>
+
+    <div class="ogt"><em>BURN</em>, <u>BLESS</u> or <s>STASH</s>.<small>A lab rat with Jev for a brain · three levers · every 3 minutes · pump.fun</small></div>
+    <div class="toast" id="toast"><div class="big" id="toastBig"></div><div class="sub" id="toastSub"></div></div>
+
+    <div class="foot">
+      <div class="mid">
+        <span class="pill">pot <b id="pot">—</b></span>
+        <span class="pill"><span class="led" id="led"></span>brain <b id="brain">—</b></span>
+        <span class="pill" id="pullsPill">pulls <b id="pulls">0</b></span>
+      </div>
+      <div class="arms">
+        <div class="arm burn" id="armBurn">
+          <h3>🔥 BURN <small id="burnN">0 burns</small></h3>
+          <div class="pct"><span id="pBurn">33%</span><small id="pBurnLbl">odds</small></div>
+          <p>buy the pot, <b id="burnTok">0</b> tokens burned so far</p>
+          <button class="pv" data-pv="burn">▶ preview</button>
+        </div>
+        <div class="arm bless" id="armBless">
+          <h3>🧀 BLESS <small id="blessN">0 blessings</small></h3>
+          <div class="pct"><span id="pBless">33%</span><small id="pBlessLbl">odds</small></div>
+          <p id="blessLine">buy the pot, <b>one holder</b> gets it all — your bag is your odds</p>
+          <button class="pv" data-pv="bless">▶ preview</button>
+        </div>
+        <div class="arm stash" id="armStash">
+          <h3>🕳 STASH <small id="stashN">0 stashes</small></h3>
+          <div class="pct"><span id="pStash">33%</span><small id="pStashLbl">odds</small></div>
+          <p>spend nothing, <b>the pot rolls over</b> — the next pull is bigger</p>
+          <button class="pv" data-pv="stash">▶ preview</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="how">
+    <div class="eyebrow">the experiment</div>
+    <h2>One rat. Three levers.<br><em>Burn</em>, <u>bless</u> or <s>stash</s>.</h2>
+    <p class="lede">A Skinner box with a treasury in it. <b>LABRAT is a lab rat whose brain is Jev</b> — a decision model that answers typed questions with calibrated probabilities in milliseconds. Every 3 minutes the rat is shown the tape and pulls one of three levers with the coin's creator fees: the burner, the cheese, or the nest.</p>
+    <div class="steps">
+      <div class="card step"><div class="n">1</div><h4>The pot fills</h4><p>Every trade of the coin on pump.fun pays creator fees. They pile up in a vault. <b>That is the pot</b> — nothing else is ever spent.</p></div>
+      <div class="card step"><div class="n">2</div><h4>Jev sets the odds</h4><p>The engine shows Jev the tape, the holders and how past pulls went, and asks: which lever? Jev answers with <b>P(burn)</b>, <b>P(bless)</b> and <b>P(stash)</b>.</p></div>
+      <div class="card step"><div class="n">3</div><h4>A block pulls it</h4><p>The hash of the newest finalized Solana block is the dice. Nobody knows it in advance, <b>anyone can recompute the roll</b> afterwards.</p></div>
+      <div class="card step"><div class="n">4</div><h4>The rat obeys</h4><p><b>🔥 Burn</b>: claim → one buy → burn. <b>🧀 Bless</b>: claim → one buy → all of it to one holder, odds = their share. <b>🕳 Stash</b>: nothing moves, the pot rolls over and the next pull is bigger.</p></div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi"><div class="v" id="kTrials">0</div><div class="k">lever pulls</div></div>
+      <div class="card kpi"><div class="v" id="kBurned" style="color:var(--burn)">0</div><div class="k">tokens burned</div></div>
+      <div class="card kpi"><div class="v" id="kBlessed" style="color:var(--bless)">0</div><div class="k">tokens given to holders</div></div>
+      <div class="card kpi"><div class="v" id="kUsd">$0</div><div class="k">fees turned into buybacks</div></div>
+    </div>
+  </section>
+
+  <section id="log">
+    <div class="eyebrow">lab log</div>
+    <h2>Every pull, with receipts.</h2>
+    <p class="lede">Tap a row to see what the brain saw, the odds it set, the block that rolled them — your browser <b>recomputes the roll</b> on the spot.</p>
+    <div class="card log" id="logBox"><div class="empty">no pulls yet — the first one lands when the countdown hits zero.</div></div>
+  </section>
+
+  <section id="blessed">
+    <div class="eyebrow">the blessed</div>
+    <h2>Your bag is <u>your odds</u>.</h2>
+    <p class="lede">When the rat pulls the cheese lever, one wallet gets the entire buyback. The draw is weighted: hold <b>2%</b> of the tokens in the draw, get picked <b>2%</b> of the time. The top <span id="topN">100</span> real wallets are in — the bonding curve, pools and the engine wallet are not.</p>
+    <div class="two">
+      <div class="card board"><div class="h"><h4>Wallets the rat has fed</h4><small class="mono" id="boardN" style="color:var(--mute)"></small></div><div id="board"><div class="empty">nobody yet.</div></div></div>
+      <div class="card odds"><h4>What are my odds?</h4><p style="color:var(--mute);font-size:13.5px;margin-top:6px">Paste a wallet. Read-only — nothing to connect, nothing to sign.</p>
+        <input id="oddsIn" placeholder="your Solana wallet address" spellcheck="false" autocomplete="off">
+        <div class="res" id="oddsRes"></div>
+        <div id="oddsTop" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="eyebrow">results so far</div>
+    <h2>Which lever works?</h2>
+    <p class="lede">One interval after every pull the engine writes down where the price went. Jev gets these numbers back as feedback on the next question.</p>
+    <div class="vs">
+      <div class="card" style="--c:var(--burn)"><div class="tag burn">🔥 burn</div><div class="v" id="rBurn" style="margin-top:10px">—</div><dl id="rBurnDl"></dl></div>
+      <div class="card" style="--c:var(--bless)"><div class="tag bless">🧀 bless</div><div class="v" id="rBless" style="margin-top:10px">—</div><dl id="rBlessDl"></dl></div>
+      <div class="card" style="--c:var(--stash)"><div class="tag stash">🕳 stash</div><div class="v" id="rStash" style="margin-top:10px">—</div><dl id="rStashDl"></dl></div>
+    </div>
+  </section>
+
+  <section id="protocol">
+    <div class="eyebrow">the protocol</div>
+    <h2>The exact words the brain hears.</h2>
+    <p class="lede">Jev does not chat. It gets a small numeric <b>state</b> and these typed questions, and returns probabilities. The questions below are read live from the engine (<span class="mono">/api/protocol</span>).</p>
+    <div class="proto" id="proto"></div>
+  </section>
+
+  <section id="faq">
+    <div class="eyebrow">faq</div>
+    <h2>Questions.</h2>
+    <details><summary>Is it a real rat?</summary><p><b>No.</b> The rat is a 3D model. Its "brain" is <b>Jev</b>, TypeSafe AI's System One decision model, called over an API once per trial. No animal was involved. The box is a nod to the Skinner box — here the levers move money instead of pellets.</p></details>
+    <details><summary>Does Jev decide, or is it random?</summary><p><b>Both, on purpose.</b> Jev sets the odds — if it answers P(burn) 50%, P(bless) 30%, P(stash) 20%, that is how the bar is split. A finalized Solana block then rolls a number across that bar. Jev shifts the odds with the market; the block keeps anyone — us included — from choosing the outcome. If Jev cannot be reached, every lever gets equal odds and the row is tagged <b>instinct</b>, never Jev.</p></details>
+    <details><summary>What does STASH actually do?</summary><p>Nothing on chain. No claim, no buy. The pot keeps growing and the next lever pull spends all of it, so a stash is a bigger burn or a bigger blessing later. The rat hoards. Jev is told to prefer it when the pot is small next to the market cap or the tape is dead — a tiny buy there changes nothing.</p></details>
+    <details><summary>How is the blessed holder picked?</summary><p>Before the block is read, the engine snapshots the top real wallets and their balances. Then <span class="mono">sha256(blockhash:trialId:bless)</span> becomes a ticket between 0 and the sum of those balances, and the wallet whose slice contains the ticket wins. Bigger bag, bigger slice. The snapshot is stored with the trial — open any bless row and your browser re-runs the draw.</p></details>
+    <details><summary>Which wallets are excluded?</summary><p>Accounts owned by programs (the bonding curve, the PumpSwap pool, lockers), and the engine's own wallet. Only wallets in the top N by balance are in the draw, so dust accounts cannot farm it.</p></details>
+    <details><summary>Where does the money come from?</summary><p>Only from the coin's <b>creator fees</b> on pump.fun. The engine keeps its own ledger: it spends only what it claimed and only burns or gives away what it bought in that trial. It never touches anything else in the wallet.</p></details>
+    <details><summary>Do I need to do anything to be blessed?</summary><p>Hold the coin in a normal wallet. That's it. Blessings arrive as a plain token transfer — <b>never sign or "claim" anything</b>; anyone asking you to is a scammer.</p></details>
+  </section>
+
+  <footer>
+    <b>LABRAT</b> is an entertainment experiment on Solana, not an investment and not a promise of returns; a blessing is a lottery-style reward paid from trading fees and most holders will never receive one. Not affiliated with TypeSafe AI or the $JEV coin. "Jev" names the model the engine calls; rows tagged <span class="mono">instinct</span> were not answered by it. Memecoins are volatile — don't buy what you can't afford to lose.
+    <div style="margin-top:10px" class="mono" id="footMeta"></div>
+  </footer>
+</main>
+
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+const $ = (id) => document.getElementById(id);
+const V3 = THREE.Vector3;
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ease = (t) => (t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const dampAngle = (a, b, k, dt) => { let d = ((b - a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; return a + d * (1 - Math.exp(-k * dt)); };
+const ARMS = ["burn", "bless", "stash"];
+
+/* =====================================================================  THE BOX  */
+const canvas = $("stage");
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" }); }
+catch { renderer = null; }
+
+const world = { burn: new V3(-4.2, 0, -1), bless: new V3(4.2, 0, -1), stash: new V3(0, 0, -4.2), ember: new V3(), cheese: new V3(), nest: new V3(), narrow: false };
+const show = { id: null, action: null, result: null, demo: false, flare: 0, glory: 0, hoard: 0 };
+let rat = null, director = () => {};
+
+if (renderer) {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .78;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x090b10);
+  scene.fog = new THREE.FogExp2(0x090b10, .03);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+  scene.environmentIntensity = .35;
+  const camera = new THREE.PerspectiveCamera(40, 1, .1, 120);
+
+  // ------------------------------------------------ lights: a cold lab lamp over the box
+  scene.add(new THREE.HemisphereLight(0xc9d6e6, 0x06080c, .32));
+  const key = new THREE.SpotLight(0xf2f6ff, 52, 40, .7, .6, 1.6);
+  key.position.set(1, 12, 4); key.target.position.set(0, 0, -1); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -.0004; key.shadow.radius = 5;
+  scene.add(key, key.target);
+  const rim = new THREE.DirectionalLight(0x6fc3ff, .4); rim.position.set(-3, 4, -8); scene.add(rim);
+  const emberLight = new THREE.PointLight(0xff5a1f, 30, 14, 2);
+  const cheeseLight = new THREE.PointLight(0xffd34d, 40, 14, 2);
+  const nestLight = new THREE.PointLight(0x6fc3ff, 18, 12, 2);
+  const ratLight = new THREE.PointLight(0xffffff, 4, 7, 2);
+  scene.add(emberLight, cheeseLight, nestLight, ratLight);
+
+  // ------------------------------------------------ floor: white acrylic with a grid, the box walls
+  const floorCv = document.createElement("canvas"); floorCv.width = floorCv.height = 1024;
+  const floorTex = new THREE.CanvasTexture(floorCv); floorTex.colorSpace = THREE.SRGBColorSpace; floorTex.anisotropy = 8;
+  const BW = 13, BD = 10; // box width / depth
+  function paintFloor() {
+    const c = floorCv.getContext("2d"), S = 1024, px = (x) => S / 2 + (x / (BW / 2)) * S / 2, pz = (z) => S / 2 + (z / (BD / 2)) * S / 2;
+    c.fillStyle = "#c3c9d3"; c.fillRect(0, 0, S, S);
+    const glow = (p, col) => { const g = c.createRadialGradient(px(p.x), pz(p.z), 0, px(p.x), pz(p.z), 200); g.addColorStop(0, col); g.addColorStop(1, "transparent"); c.fillStyle = g; c.fillRect(0, 0, S, S); };
+    glow(world.burn, "rgba(255,90,31,.32)"); glow(world.bless, "rgba(255,211,77,.32)"); glow(world.stash, "rgba(111,195,255,.3)");
+    c.strokeStyle = "rgba(20,26,34,.2)"; c.lineWidth = 1.5;
+    for (let x = 0; x <= S; x += S / 13) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, S); c.stroke(); }
+    for (let y = 0; y <= S; y += S / 10) { c.beginPath(); c.moveTo(0, y); c.lineTo(S, y); c.stroke(); }
+    c.strokeStyle = "rgba(20,26,34,.35)"; c.lineWidth = 3; c.strokeRect(6, 6, S - 12, S - 12);
+    c.strokeStyle = "rgba(60,120,40,.5)"; c.lineWidth = 2; c.setLineDash([6, 8]); c.beginPath(); c.arc(px(0), pz(1.4), 46, 0, 7); c.stroke(); c.setLineDash([]);
+    for (const [p, col] of [[world.burn, "rgba(255,90,31,.55)"], [world.bless, "rgba(255,211,77,.6)"], [world.stash, "rgba(111,195,255,.6)"]]) { c.strokeStyle = col; c.lineWidth = 2; c.setLineDash([3, 10]); c.beginPath(); c.moveTo(px(0), pz(1.4)); c.lineTo(px(p.x), pz(p.z)); c.stroke(); c.setLineDash([]); c.beginPath(); c.arc(px(p.x), pz(p.z), 88, 0, 7); c.stroke(); }
+    c.textAlign = "center"; c.font = `900 ${world.narrow ? 26 : 40}px Unbounded, sans-serif`;
+    c.fillStyle = "rgba(200,60,20,.85)"; c.fillText("BURN", px(world.burn.x), pz(world.burn.z + 1.9));
+    c.fillStyle = "rgba(170,130,10,.9)"; c.fillText("BLESS", px(world.bless.x), pz(world.bless.z + 1.9));
+    c.fillStyle = "rgba(40,110,170,.85)"; c.fillText("STASH", px(world.stash.x), pz(world.stash.z + 2.6));
+    c.font = "600 15px JetBrains Mono, monospace"; c.fillStyle = "rgba(40,60,40,.6)"; c.fillText("SUBJECT 001 · LABRAT · BOX A", px(0), pz(1.4) + 74);
+    floorTex.needsUpdate = true;
+  }
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(BW, BD).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: floorTex, roughness: .6, metalness: .02 }));
+  floor.receiveShadow = true; scene.add(floor);
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xbfe0ff, transparent: true, opacity: .07, roughness: .05, side: THREE.DoubleSide, depthWrite: false });
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a3140, roughness: .4, metalness: .7 });
+  const WH = 2.4;
+  for (const [w, x, z, ry, hh] of [[BW, 0, -BD / 2, 0, WH], [BW, 0, BD / 2, 0, .7], [BD, -BW / 2, 0, Math.PI / 2, WH], [BD, BW / 2, 0, Math.PI / 2, WH]]) {
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), glassMat); g.position.set(x, hh / 2, z); g.rotation.y = ry; scene.add(g);
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(w + .12, .08, .08), frameMat); bar.position.set(x, hh, z); bar.rotation.y = ry; scene.add(bar);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(w + .12, .12, .12), frameMat); base.position.set(x, .06, z); base.rotation.y = ry; scene.add(base);
+  }
+  for (const [x, z, hh] of [[-BW / 2, -BD / 2, WH], [BW / 2, -BD / 2, WH], [-BW / 2, BD / 2, .7], [BW / 2, BD / 2, .7]]) { const post = new THREE.Mesh(new THREE.BoxGeometry(.12, hh, .12), frameMat); post.position.set(x, hh / 2, z); scene.add(post); }
+
+  // ------------------------------------------------ particles
+  class Puffs {
+    constructor(n, blending) {
+      this.n = n; this.i = 0;
+      this.pos = new Float32Array(n * 3); this.col = new Float32Array(n * 4); this.size = new Float32Array(n);
+      this.vel = new Float32Array(n * 3); this.life = new Float32Array(n); this.max = new Float32Array(n); this.s0 = new Float32Array(n); this.grow = new Float32Array(n); this.grav = new Float32Array(n); this.a0 = new Float32Array(n); this.pull = new Array(n).fill(null);
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.BufferAttribute(this.pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(this.col, 4)); g.setAttribute("size", new THREE.BufferAttribute(this.size, 1));
+      this.mat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending, uniforms: { uScale: { value: 600 } },
+        vertexShader: "attribute float size;attribute vec4 color;varying vec4 vC;uniform float uScale;void main(){vC=color;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=size*uScale/-mv.z;gl_Position=projectionMatrix*mv;}",
+        fragmentShader: "varying vec4 vC;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,.05,d)*vC.a;if(a<.004)discard;gl_FragColor=vec4(vC.rgb,a);}" });
+      this.points = new THREE.Points(g, this.mat); this.points.frustumCulled = false; scene.add(this.points);
+    }
+    emit(p, v, o) {
+      const i = this.i = (this.i + 1) % this.n;
+      this.pos.set([p.x, p.y, p.z], i * 3); this.vel.set([v.x, v.y, v.z], i * 3);
+      this.life[i] = this.max[i] = o.life; this.s0[i] = o.size; this.grow[i] = o.grow || 0; this.grav[i] = o.grav || 0; this.a0[i] = o.alpha ?? 1; this.pull[i] = o.pull || null;
+      this.col.set([o.color[0], o.color[1], o.color[2], 0], i * 4);
+    }
+    update(dt) {
+      for (let i = 0; i < this.n; i++) {
+        if (this.life[i] <= 0) { if (this.size[i]) this.size[i] = 0; continue; }
+        this.life[i] -= dt; const u = 1 - Math.max(0, this.life[i]) / this.max[i], k = i * 3;
+        if (this.pull[i]) { const t = this.pull[i], s = 4.5 * dt; this.vel[k] += (t.x - this.pos[k]) * s * 4; this.vel[k + 1] += (t.y - this.pos[k + 1]) * s * 4; this.vel[k + 2] += (t.z - this.pos[k + 2]) * s * 4; const f = Math.exp(-3 * dt); this.vel[k] *= f; this.vel[k + 1] *= f; this.vel[k + 2] *= f; }
+        this.vel[k + 1] -= this.grav[i] * dt;
+        this.pos[k] += this.vel[k] * dt; this.pos[k + 1] += this.vel[k + 1] * dt; this.pos[k + 2] += this.vel[k + 2] * dt;
+        this.size[i] = this.s0[i] * (1 + this.grow[i] * u);
+        this.col[i * 4 + 3] = this.a0[i] * Math.sin(Math.PI * Math.min(1, u * .85 + .15)) * (this.life[i] > 0 ? 1 : 0);
+      }
+      const g = this.points.geometry; g.attributes.position.needsUpdate = g.attributes.color.needsUpdate = g.attributes.size.needsUpdate = true;
+    }
+  }
+  const smoke = new Puffs(260, THREE.NormalBlending);
+  const sparks = new Puffs(700, THREE.AdditiveBlending);
+  const rnd = (a = 1) => (Math.random() - .5) * 2 * a;
+
+  // ------------------------------------------------ a lever: base plate, pivot, arm, LED
+  function buildLever(color) {
+    const g = new THREE.Group();
+    const base = new THREE.Mesh(new RoundedBoxGeometry(.9, .28, .6, 3, .06), frameMat); base.position.y = .14; base.castShadow = base.receiveShadow = true; g.add(base);
+    const pivot = new THREE.Group(); pivot.position.set(0, .34, -.05); g.add(pivot);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .06, 1.15, 12), new THREE.MeshStandardMaterial({ color: 0xcfd6e2, metalness: .9, roughness: .25 })); arm.rotation.x = .55; arm.position.set(0, .5, .32); arm.castShadow = true; pivot.add(arm);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(.14, 20, 14), new THREE.MeshStandardMaterial({ color, roughness: .35 })); knob.position.set(0, 1.0, .62); pivot.add(knob);
+    const ledMat = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: color, emissiveIntensity: 1.2 });
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.06, 12, 10), ledMat); led.position.set(.3, .3, .2); g.add(led);
+    g.userData = { pivot, ledMat, press: 0 };
+    return g;
+  }
+
+  // ------------------------------------------------ BURN station: an incinerator with a live flame + its lever
+  const burnSt = new THREE.Group(); scene.add(burnSt);
+  {
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(.85, .95, 1.5, 40), new THREE.MeshStandardMaterial({ color: 0x3a4150, roughness: .45, metalness: .75 })); body.position.set(0, .75, -1.1); body.castShadow = body.receiveShadow = true;
+    const lip = new THREE.Mesh(new THREE.TorusGeometry(.85, .08, 12, 48).rotateX(Math.PI / 2), frameMat); lip.position.set(0, 1.5, -1.1);
+    const ember = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, .1, 32), new THREE.MeshStandardMaterial({ color: 0x220800, emissive: 0xff5a18, emissiveIntensity: 4, roughness: .9 })); ember.position.set(0, 1.46, -1.1); ember.name = "ember";
+    const gCv = document.createElement("canvas"); gCv.width = gCv.height = 128; const gc = gCv.getContext("2d"), gg = gc.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gg.addColorStop(0, "rgba(255,190,110,1)"); gg.addColorStop(.25, "rgba(255,90,31,.55)"); gg.addColorStop(1, "rgba(255,90,31,0)"); gc.fillStyle = gg; gc.fillRect(0, 0, 128, 128);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gCv), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false })); glow.position.set(0, 1.9, -1.1); glow.scale.setScalar(2.2);
+    for (let i = 0; i < 6; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(.5, .06, .06), new THREE.MeshStandardMaterial({ color: 0x1b2028 })); v.position.set(0, .35 + i * .18, -.16); body.add(v); }
+    const lever = buildLever(0xff5a1f); lever.position.set(0, 0, .55); lever.rotation.y = 0;
+    burnSt.add(body, lip, ember, glow, lever);
+    burnSt.userData = { ember, glow, lever };
+  }
+  // ------------------------------------------------ BLESS station: a cheese dispenser under a warm lamp + its lever
+  const blessSt = new THREE.Group(); scene.add(blessSt);
+  {
+    const tray = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.1, .22, 40), new THREE.MeshStandardMaterial({ color: 0xd8dce4, roughness: .3, metalness: .5 })); tray.position.set(0, .11, -1.1); tray.castShadow = tray.receiveShadow = true;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 4.2, 10), frameMat); pole.position.set(0, 2.1, -1.9);
+    const chute = new THREE.Mesh(new THREE.CylinderGeometry(.42, .55, 1.1, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0x8e96a6, metalness: .7, roughness: .3, side: THREE.DoubleSide })); chute.position.set(0, 3.3, -1.1);
+    const cheeseCv = document.createElement("canvas"); cheeseCv.width = cheeseCv.height = 256; const cc = cheeseCv.getContext("2d");
+    cc.fillStyle = "#ffd34d"; cc.fillRect(0, 0, 256, 256); cc.fillStyle = "#e0a91a"; for (let i = 0; i < 26; i++) { cc.beginPath(); cc.arc(Math.random() * 256, Math.random() * 256, 6 + Math.random() * 12, 0, 7); cc.fill(); }
+    const cheeseTex = new THREE.CanvasTexture(cheeseCv); cheeseTex.colorSpace = THREE.SRGBColorSpace;
+    const cheese = new THREE.Mesh(new THREE.CylinderGeometry(.72, .72, .42, 24, 1, false, 0, Math.PI / 2.6), new THREE.MeshStandardMaterial({ map: cheeseTex, roughness: .55, emissive: 0xffd34d, emissiveIntensity: .12 })); cheese.position.set(.25, .43, -.9); cheese.rotation.y = 2.4; cheese.castShadow = true;
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(.85, .06, 16, 80).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x3a2a00, emissive: 0xffd34d, emissiveIntensity: 2.4 })); halo.position.set(0, 2.75, -1.1);
+    const beamCv = document.createElement("canvas"); beamCv.width = 8; beamCv.height = 256; const bc = beamCv.getContext("2d");
+    const bg = bc.createLinearGradient(0, 0, 0, 256); bg.addColorStop(0, "rgba(255,225,130,0)"); bg.addColorStop(.35, "rgba(255,225,130,.5)"); bg.addColorStop(1, "rgba(255,225,130,0)"); bc.fillStyle = bg; bc.fillRect(0, 0, 8, 256);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(.5, 1.3, 3.2, 40, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(beamCv), transparent: true, opacity: .4, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); beam.position.set(0, 1.7, -1.1);
+    const lever = buildLever(0xffd34d); lever.position.set(0, 0, .55);
+    blessSt.add(tray, pole, chute, cheese, halo, beam, lever);
+    blessSt.userData = { halo, beam, cheese, lever, drop: 0 };
+  }
+  // ------------------------------------------------ STASH station: the nest — a cardboard box full of shredded paper + its lever
+  const stashSt = new THREE.Group(); scene.add(stashSt);
+  {
+    const card = new THREE.MeshStandardMaterial({ color: 0xb98b5a, roughness: .9 });
+    const box = new THREE.Group(); box.position.set(0, 0, -1.0); stashSt.add(box);
+    const bottom = new THREE.Mesh(new THREE.BoxGeometry(2.2, .08, 1.7), card); bottom.position.y = .04; box.add(bottom);
+    for (const [w, d, x, z, ry] of [[2.2, .08, 0, -.85, 0], [1.7, .08, -1.1, 0, Math.PI / 2], [1.7, .08, 1.1, 0, Math.PI / 2]]) { const wall = new THREE.Mesh(new THREE.BoxGeometry(w, .9, d), card); wall.position.set(x, .45, z); wall.rotation.y = ry; wall.castShadow = wall.receiveShadow = true; box.add(wall); }
+    const front = new THREE.Mesh(new THREE.BoxGeometry(2.2, .42, .08), card); front.position.set(0, .21, .85); box.add(front);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(.36, 24), new THREE.MeshStandardMaterial({ color: 0x0b0d12 })); hole.position.set(0, .48, -.845); hole.rotation.y = Math.PI; box.add(hole);
+    const paper = new THREE.MeshStandardMaterial({ color: 0xf1ede4, roughness: 1 });
+    for (let i = 0; i < 70; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(.05, .02, .25 + Math.random() * .3), paper); s.position.set(rnd(.95), .1 + Math.random() * .3, rnd(.7)); s.rotation.set(rnd(.6), rnd(3), rnd(.6)); box.add(s); }
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 10), new THREE.MeshStandardMaterial({ color: 0x0a1a2a, emissive: 0x6fc3ff, emissiveIntensity: 2 })); lamp.position.set(0, 1.25, -1.0);
+    const lever = buildLever(0x6fc3ff); lever.position.set(0, 0, .55);
+    stashSt.add(lamp, lever);
+    stashSt.userData = { box, lamp, lever };
+  }
+
+  // ------------------------------------------------ THE RAT (albino: white fur, pink ears and tail, red eyes)
+  function buildRat() {
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body); body.position.y = .42;
+    const fur = new THREE.MeshStandardMaterial({ color: 0xe6dfd2, roughness: 1, metalness: 0 });
+    const pink = new THREE.MeshStandardMaterial({ color: 0xf2a3b3, roughness: .7 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1b1f26, roughness: .5, metalness: .3 });
+    const add = (m, parent = body) => { m.castShadow = true; parent.add(m); return m; };
+    const torso = add(new THREE.Mesh(new THREE.SphereGeometry(.46, 40, 28), fur)); torso.scale.set(.92, .78, 1.55); torso.position.z = -.05;
+    const rump = add(new THREE.Mesh(new THREE.SphereGeometry(.5, 40, 28), fur)); rump.scale.set(.98, .86, 1.0); rump.position.set(0, -.04, -.5);
+    const head = new THREE.Group(); head.position.set(0, .16, .62); body.add(head);
+    const skull = add(new THREE.Mesh(new THREE.SphereGeometry(.34, 32, 24), fur), head); skull.scale.set(.92, .84, 1.15);
+    const snout = add(new THREE.Mesh(new THREE.SphereGeometry(.2, 24, 18), fur), head); snout.scale.set(.8, .68, 1.5); snout.position.set(0, -.07, .38);
+    const nose = add(new THREE.Mesh(new THREE.SphereGeometry(.065, 14, 10), pink), head); nose.position.set(0, -.04, .66);
+    const eyeMat = new THREE.MeshPhysicalMaterial({ color: 0xc3122f, roughness: .15, clearcoat: 1, emissive: 0x4a0010, emissiveIntensity: .6 });
+    for (const s of [-1, 1]) { const e = add(new THREE.Mesh(new THREE.SphereGeometry(.075, 20, 14), eyeMat), head); e.position.set(s * .17, .07, .3); }
+    const ears = [];
+    for (const s of [-1, 1]) { const ear = new THREE.Group(); ear.position.set(s * .22, .3, .02); ear.rotation.z = -s * .55; ear.rotation.x = -.25; head.add(ear); const outer = add(new THREE.Mesh(new THREE.CylinderGeometry(.19, .19, .04, 24), fur), ear); outer.rotation.x = Math.PI / 2; const inner = add(new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .045, 24), pink), ear); inner.rotation.x = Math.PI / 2; inner.position.z = .008; ears.push({ s, ear }); }
+    const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const whiskers = [];
+    for (const s of [-1, 1]) for (let i = 0; i < 3; i++) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.006, .004, .7, 4), whiskerMat); w.position.set(s * .12, -.06 + (i - 1) * .04, .58); w.rotation.z = s * (Math.PI / 2 - .15 + (i - 1) * .18); w.rotation.y = -s * .35; head.add(w); whiskers.push({ s, w, i }); }
+    // tail: a pink tube curving back
+    const tailPts = [new V3(0, -.05, -.95), new V3(.15, -.25, -1.45), new V3(-.1, -.36, -1.95), new V3(.3, -.4, -2.45)];
+    const tail = add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tailPts), 24, .045, 8, false), pink)); tail.position.y = .02;
+    // legs
+    const legs = [];
+    for (const [x, z, front] of [[-.28, .35, 1], [.28, .35, 1], [-.32, -.6, 0], [.32, -.6, 0]]) {
+      const hip = new THREE.Group(); hip.position.set(x, -.25, z); body.add(hip);
+      const leg = add(new THREE.Mesh(new THREE.CylinderGeometry(.06, .05, .34, 10), fur), hip); leg.position.y = -.15;
+      const paw = add(new THREE.Mesh(new THREE.SphereGeometry(.075, 12, 10), pink), hip); paw.position.set(0, -.34, .05); paw.scale.set(1, .6, 1.4);
+      legs.push({ hip, front, phase: (legs.length % 2) * Math.PI });
+    }
+    // the Jev implant: a chip on the shoulders with a status LED
+    const chip = add(new THREE.Mesh(new RoundedBoxGeometry(.24, .07, .28, 2, .02), new THREE.MeshStandardMaterial({ color: 0x0c0f14, metalness: .8, roughness: .3 }))); chip.position.set(0, .38, .1);
+    const ledMat = new THREE.MeshStandardMaterial({ color: 0x102000, emissive: 0x9dff5a, emissiveIntensity: 2 });
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.035, 10, 8), ledMat); led.position.set(.07, .43, .18); body.add(led);
+    const wire = add(new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .34, 5), dark)); wire.position.set(-.07, .55, .02); wire.rotation.x = -.3;
+    const tipB = new THREE.Mesh(new THREE.SphereGeometry(.022, 8, 6), ledMat); tipB.position.set(-.07, .72, -.04); body.add(tipB);
+    // its own little halo (only after a blessing)
+    const myHalo = new THREE.Mesh(new THREE.TorusGeometry(.3, .03, 10, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x3a2a00, emissive: 0xffd34d, emissiveIntensity: 2 })); myHalo.position.set(0, .75, .62); myHalo.scale.setScalar(.001); body.add(myHalo);
+    root.scale.setScalar(1.5);
+    return { root, body, head, ears, whiskers, legs, tail, ledMat, myHalo };
+  }
+  const M = buildRat(); scene.add(M.root);
+  rat = { mode: "stand", t: 0, dur: 1.5, pos: new V3(0, 0, 1.4), heading: 0, rear: 0, pitch: 0, walk: 0, from: new V3(), to: new V3(), ctrl: new V3(), u: 0, T: 2, then: "stand", fin: 0, haloK: 0, press: 0 };
+  const HOME = new V3(0, 0, 1.4);
+  const go = (mode, o = {}) => Object.assign(rat, { mode, t: 0 }, o);
+  function travel(to, then, T) {
+    rat.from.copy(rat.pos); rat.to.copy(to);
+    rat.ctrl.copy(rat.from).lerp(to, .5); rat.ctrl.y = 0; rat.ctrl.x += rnd(.8); rat.ctrl.z += .6;
+    go("travel", { u: 0, T: T || clamp(rat.from.distanceTo(to) * .5, 1.4, 3.4), then });
+  }
+  const station = (a) => (a === "burn" ? burnSt : a === "bless" ? blessSt : stashSt);
+  function spot(action) { const s = station(action || "burn"); return s.position.clone().add(new V3(0, 0, 1.35)); } // in front of the lever
+  function leverOf(action) { return station(action || "burn").userData.lever; }
+
+  function updateRat(dt, time) {
+    rat.t += dt; const f = rat; let wantHeading = f.heading, speedWalk = 0, targetRear = 0;
+    if (f.mode === "stand") { if (f.t > f.dur) { const r = Math.random(); if (r < .5) { f.to.set(rnd(3.2), 0, 1.4 + rnd(1.6)); go("walk"); } else if (r < .85) go("groom", { dur: 2 + Math.random() * 2.5 }); else go("stand", { dur: 1 + Math.random() * 2 }); } }
+    else if (f.mode === "walk") { const dx = f.to.x - f.pos.x, dz = f.to.z - f.pos.z, d = Math.hypot(dx, dz); wantHeading = Math.atan2(dx, dz); if (d < .1 || f.t > 8) go("stand", { dur: .6 + Math.random() * 2 }); else { const turn = Math.abs(((wantHeading - f.heading + Math.PI * 3) % (Math.PI * 2)) - Math.PI); speedWalk = turn < .5 ? 1.4 : .2; f.pos.x += Math.sin(f.heading) * speedWalk * dt; f.pos.z += Math.cos(f.heading) * speedWalk * dt; } }
+    else if (f.mode === "groom") { targetRear = .55; if (f.t > f.dur) go("stand", { dur: .5 + Math.random() * 1.5 }); }
+    else if (f.mode === "think") {
+      // rears up at home and sniffs towards each lever in turn
+      targetRear = 1; f.pos.x = damp(f.pos.x, HOME.x, 3, dt); f.pos.z = damp(f.pos.z, HOME.z, 3, dt);
+      const k = Math.floor(f.t / 1.1) % 3, tgt = [world.burn, world.stash, world.bless][k];
+      wantHeading = Math.atan2(tgt.x - f.pos.x, tgt.z - f.pos.z);
+      if (f.t > 3.4 && show.action) travel(spot(show.action), "perform");
+      else if (f.t > 3.4 && show.result) { travel(HOME, "stand"); }
+      else if (f.t > 75) { show.id = null; travel(HOME, "stand"); }
+    }
+    else if (f.mode === "travel") {
+      f.u = Math.min(1, f.u + dt / f.T); const u = ease(f.u), a = 1 - u;
+      const p = new V3().copy(f.from).multiplyScalar(a * a).addScaledVector(f.ctrl, 2 * a * u).addScaledVector(f.to, u * u); p.y = 0;
+      const dx = p.x - f.pos.x, dz = p.z - f.pos.z; if (Math.hypot(dx, dz) > .002) wantHeading = Math.atan2(dx, dz);
+      speedWalk = Math.min(2, Math.hypot(dx, dz) / Math.max(dt, .001)); f.pos.copy(p);
+      if (f.u >= 1) { if (f.then === "stand") { go("stand", { dur: 1.2 }); if (show.result || !show.id) Object.assign(show, { id: null, action: null, result: null, demo: false }); } else go(f.then, { fin: 0, press: 0 }); }
+    }
+    else if (f.mode === "perform") {
+      const act = show.action || "burn", st = station(act), s = spot(act);
+      f.pos.x = damp(f.pos.x, s.x, 5, dt); f.pos.z = damp(f.pos.z, s.z, 5, dt);
+      wantHeading = Math.atan2(st.position.x - f.pos.x, st.position.z - f.pos.z);
+      targetRear = 1;
+      // the lever goes down while the rat leans on it
+      f.press = damp(f.press, f.t > .6 ? 1 : 0, 4, dt); st.userData.lever.userData.press = f.press;
+      if (act === "burn") show.flare = damp(show.flare, f.press, 2, dt);
+      else if (act === "bless") show.glory = damp(show.glory, f.press, 2, dt);
+      else show.hoard = damp(show.hoard, f.press, 2, dt);
+      // the pot leaves: into the flame, up into the light, or into the nest
+      const src = M.root.position.clone().add(new V3(0, 1.1, 0));
+      for (let i = 0; i < (f.fin ? 4 : 2); i++) {
+        if (act === "burn") sparks.emit(src.clone().add(new V3(rnd(.2), rnd(.2), rnd(.2))), new V3(rnd(1), 1 + rnd(1), rnd(1)), { life: .9, size: .085, color: [1, .55 + Math.random() * .3, .15], alpha: .95, pull: world.ember });
+        else if (act === "bless") sparks.emit(world.cheese.clone().add(new V3(rnd(.5), .6 + Math.random(), rnd(.5))), new V3(rnd(.6), 1.2 + Math.random() * 1.6, rnd(.6)), { life: 1.6, size: .065, color: [1, .82, .3], alpha: .85, grav: -.2 });
+        else sparks.emit(src.clone().add(new V3(rnd(.2), rnd(.2), rnd(.2))), new V3(rnd(1), .8 + rnd(.8), rnd(1)), { life: 1.0, size: .075, color: [.55, .8, 1], alpha: .9, pull: world.nest });
+      }
+      if (show.result && f.t > 3.2 && !f.fin) { f.fin = 1; f.t = 100; finale(act, show.result); }
+      if (f.fin && f.t > 105.2) { st.userData.lever.userData.press = 0; travel(HOME, "stand", 2.6); }
+      if (!f.fin && f.t > 80) { show.result = show.result || { status: "failed" }; travel(HOME, "stand"); }
+    }
+    // pose
+    f.rear = damp(f.rear, targetRear, 4, dt);
+    f.heading = dampAngle(f.heading, wantHeading, 4, dt);
+    M.root.position.set(f.pos.x, 0, f.pos.z);
+    M.root.rotation.set(0, f.heading, 0);
+    ratLight.position.set(f.pos.x * .8, 2.4, f.pos.z + 2.2);
+    // rearing up: the body pitches back around the hips
+    M.body.rotation.x = -f.rear * .8 + Math.sin(time * 2.2) * .01;
+    M.body.position.y = .42 + f.rear * .22 + Math.abs(Math.sin(f.walk)) * .02;
+    M.body.position.z = f.rear * .25;
+    f.walk += speedWalk * dt * 9;
+    const gr = f.mode === "groom" ? clamp(Math.min(f.t, f.dur - f.t) * 3, 0, 1) : 0;
+    for (const L of M.legs) {
+      const sw = Math.sin(f.walk + L.phase) * (speedWalk > 0 ? .55 : 0);
+      let rx = sw;
+      if (L.front) { rx = lerp(rx, -1.2 + Math.sin(time * 14 + L.phase) * .25 * (gr || f.mode === "perform" ? 1 : .2), Math.max(gr, f.rear)); }
+      L.hip.rotation.x = rx;
+    }
+    M.head.rotation.y = f.mode === "stand" ? Math.sin(time * .8) * .35 : f.mode === "think" ? Math.sin(f.t * 2.4) * .25 : 0;
+    M.head.rotation.x = (f.mode === "stand" || f.mode === "walk" ? Math.sin(time * 6) * .04 : 0) + f.rear * .5 + (f.mode === "perform" ? -.2 : 0);
+    M.head.rotation.z = gr * Math.sin(time * 6) * .12;
+    for (const W of M.whiskers) W.w.rotation.x = Math.sin(time * 9 + W.i) * .08 * (f.mode === "think" || f.mode === "stand" ? 1 : .3);
+    for (const E of M.ears) E.ear.rotation.z = -E.s * (.55 + Math.sin(time * 1.7 + E.s) * .06);
+    M.tail.rotation.y = Math.sin(time * 1.3) * .25 + (speedWalk > 0 ? Math.sin(f.walk * .5) * .3 : 0);
+    M.ledMat.emissiveIntensity = f.mode === "think" ? 2.5 + Math.sin(time * 22) * 2.5 : 1.6 + Math.sin(time * 2) * .8;
+    f.haloK = damp(f.haloK, f.fin && show.action === "bless" ? 1 : 0, 3, dt); M.myHalo.scale.setScalar(Math.max(.001, f.haloK)); M.myHalo.rotation.y = time * 2;
+  }
+
+  function finale(action, res) {
+    if (action === "bless") { blessSt.userData.drop = 1; for (let i = 0; i < 220; i++) { const a = Math.random() * 7, r = 1 + Math.random() * 3.5; sparks.emit(world.cheese.clone().add(new V3(0, 1.4, 0)), new V3(Math.cos(a) * r, 2 + Math.random() * 4, Math.sin(a) * r), { life: 2 + Math.random() * 1.4, size: .05 + Math.random() * .08, color: [1, .8 + Math.random() * .15, .25 + Math.random() * .25], alpha: .9, grav: 3.2 }); } }
+    else if (action === "burn") { for (let i = 0; i < 160; i++) sparks.emit(world.ember, new V3(rnd(2.6), 1 + Math.random() * 4.5, rnd(2.6)), { life: 1 + Math.random() * 1.3, size: .05 + Math.random() * .08, color: [1, .35 + Math.random() * .4, .08], alpha: 1, grav: 2.4 }); for (let i = 0; i < 40; i++) smoke.emit(world.ember, new V3(rnd(.9), 1 + Math.random() * 1.6, rnd(.9)), { life: 3 + Math.random() * 2, size: .7, grow: 3, color: [.5, .5, .5], alpha: .32 }); }
+    else { for (let i = 0; i < 120; i++) sparks.emit(world.nest.clone().add(new V3(rnd(1), .3, rnd(.7))), new V3(rnd(1.2), 1 + Math.random() * 2.5, rnd(1.2)), { life: 1.2 + Math.random(), size: .05 + Math.random() * .06, color: [.6, .85, 1], alpha: .9, grav: 2.8 }); }
+    showToast(action, res);
+  }
+
+  // ------------------------------------------------ layout + loop
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), .28, .5, .97); composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+  const look = new V3(0, 1.4, -.6); const camHome = new V3();
+  function layout() {
+    const w = canvas.clientWidth, h = canvas.clientHeight, a = w / h; world.narrow = a < .9;
+    const sx = world.narrow ? 2.6 : clamp(2.6 + a * .9, 3.3, 4.2), sz = world.narrow ? -1.6 : -1.2, sb = world.narrow ? -3.9 : -3.8;
+    world.burn.set(-sx, 0, sz); world.bless.set(sx, 0, sz); world.stash.set(0, 0, sb);
+    burnSt.position.copy(world.burn); blessSt.position.copy(world.bless); stashSt.position.copy(world.stash);
+    burnSt.updateMatrixWorld(true); burnSt.userData.ember.getWorldPosition(world.ember);
+    blessSt.updateMatrixWorld(true); blessSt.userData.cheese.getWorldPosition(world.cheese);
+    stashSt.updateMatrixWorld(true); stashSt.userData.box.getWorldPosition(world.nest); world.nest.y += .5;
+    emberLight.position.copy(world.ember).add(new V3(0, .6, .4)); cheeseLight.position.copy(world.cheese).add(new V3(0, 2.2, .4)); nestLight.position.copy(world.nest).add(new V3(0, 1.2, .6));
+    camera.fov = world.narrow ? 54 : 40; camera.aspect = a;
+    const half = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * a, dist = clamp((sx + (world.narrow ? 1.9 : 3.6)) / half, 11, 27);
+    camHome.set(0, world.narrow ? 6.6 : 5.2, dist + 1.5); look.set(0, world.narrow ? .9 : .8, world.narrow ? -1.4 : -.9);
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false); composer.setSize(w, h);
+    const sc = renderer.getDrawingBufferSize(new THREE.Vector2()).y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+    smoke.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = sc;
+    paintFloor();
+  }
+  layout(); camera.position.copy(camHome); addEventListener("resize", layout);
+  document.fonts?.ready.then(paintFloor);
+  let mx = 0, my = 0; addEventListener("pointermove", (e) => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; });
+  let visible = true; new IntersectionObserver((es) => { visible = es[0].isIntersecting; }).observe(canvas);
+
+  const clock = new THREE.Clock(); let smokeAcc = 0, time = 0;
+  function frame() {
+    requestAnimationFrame(frame);
+    if (!visible || document.hidden) { clock.getDelta(); return; }
+    tick(Math.min(.05, clock.getDelta()));
+  }
+  function tick(dt) {
+    time += dt;
+    director(dt); updateRat(dt, time);
+    if (rat.mode !== "perform") { show.flare = damp(show.flare, 0, 1.2, dt); show.glory = damp(show.glory, 0, 1.2, dt); show.hoard = damp(show.hoard, 0, 1.2, dt); }
+    // levers: press animation + LED pulse
+    for (const st of [burnSt, blessSt, stashSt]) { const L = st.userData.lever.userData; L.pivot.rotation.x = damp(L.pivot.rotation.x, L.press * .75, 6, dt); L.ledMat.emissiveIntensity = .8 + L.press * 3 + Math.sin(time * 3 + st.position.x) * .3; }
+    // incinerator
+    const flick = .75 + Math.sin(time * 13) * .12 + Math.sin(time * 31) * .08;
+    burnSt.userData.ember.material.emissiveIntensity = (3.5 + show.flare * 7) * flick; emberLight.intensity = (8 + show.flare * 45) * flick; burnSt.userData.glow.scale.setScalar((1.8 + show.flare * 1.8) * (.9 + flick * .15));
+    smokeAcc += dt * (4 + show.flare * 22);
+    while (smokeAcc > 1) { smokeAcc--; smoke.emit(world.ember.clone().add(new V3(rnd(.3), .1, rnd(.3))), new V3(rnd(.12) + .1, .55 + Math.random() * .35, rnd(.12)), { life: 4 + Math.random() * 2, size: .22, grow: 3, color: [.5, .52, .55], alpha: .1 + show.flare * .08 }); }
+    if (Math.random() < .12 + show.flare) sparks.emit(world.ember, new V3(rnd(.5), .6 + Math.random(), rnd(.5)), { life: .9, size: .07, color: [1, .5, .1], alpha: 1, grav: .6 });
+    // cheese lamp + the cheese
+    const H = blessSt.userData; H.halo.rotation.y = time * .6; H.halo.scale.setScalar(1 + show.glory * .25 + Math.sin(time * 3) * .015);
+    H.halo.material.emissiveIntensity = 1.6 + show.glory * 3; H.beam.material.opacity = .18 + show.glory * .3 + Math.sin(time * 1.7) * .04; cheeseLight.intensity = 10 + show.glory * 50;
+    H.drop = damp(H.drop, 0, 1.6, dt); H.cheese.position.y = .43 + H.drop * 2.4 * Math.max(0, Math.sin(H.drop * Math.PI)); H.cheese.rotation.y = 2.4 + time * .2 + H.drop * 6; H.cheese.material.emissiveIntensity = .12 + show.glory * .5;
+    if (Math.random() < .2 + show.glory) sparks.emit(world.cheese.clone().add(new V3(rnd(.7), 2.6 + Math.random(), rnd(.7))), new V3(rnd(.1), -.5 - Math.random() * .5, rnd(.1)), { life: 3.0, size: .035 + Math.random() * .03, color: [1, .85, .4], alpha: .7 });
+    // the nest
+    stashSt.userData.lamp.material.emissiveIntensity = 1.4 + show.hoard * 3 + Math.sin(time * 2.5) * .3; nestLight.intensity = 8 + show.hoard * 40;
+    if (Math.random() < .05 + show.hoard * .6) sparks.emit(world.nest.clone().add(new V3(rnd(.9), .1, rnd(.6))), new V3(rnd(.2), .6 + Math.random() * .6, rnd(.2)), { life: 1.8, size: .04, color: [.6, .85, 1], alpha: .6 });
+    smoke.update(dt); sparks.update(dt);
+    // camera: gentle parallax, leans towards the action
+    const lean = rat.mode === "perform" || (rat.mode === "travel" && rat.then === "perform") ? (show.action === "bless" ? 1 : show.action === "burn" ? -1 : 0) : 0;
+    const push = rat.mode === "perform" && show.action === "stash" ? 1 : 0;
+    camera.position.x = damp(camera.position.x, camHome.x + mx * 1.4 + lean * .9, 2, dt); camera.position.y = damp(camera.position.y, camHome.y - my * .8, 2, dt); camera.position.z = damp(camera.position.z, camHome.z - Math.abs(lean) * .6 - push * 1.4, 2, dt);
+    camera.lookAt(look.x + lean * .6, look.y, look.z - push * .8);
+    composer.render(dt);
+  }
+  frame();
+  window.__rat = { rat, show, world, step: (sec) => { for (let i = 0; i < sec * 60; i++) tick(1 / 60); } }; // for poking around in the console
+}
+
+/* =====================================================================  DATA + HUD  */
+let T = null, skew = 0, lastTrialSeen = null, demoAt = performance.now() + 14000;
+const nowS = () => Date.now() / 1000 + skew;
+const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : "");
+const num = (v, d = 0) => Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: d });
+const big = (v) => { v = Number(v || 0); return v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e4 ? (v / 1e3).toFixed(1) + "K" : num(v); };
+const pct = (p) => `${Math.round((p ?? 1 / 3) * 100)}%`;
+const api = async (p) => { const r = await fetch(`/api/${p}`, { cache: "no-store" }); if (!r.ok) throw new Error(p); return r.json(); };
+const OPEN = ["deciding", "claiming", "buying", "dosing"];
+const sym = () => `$${T?.symbol || "LABRAT"}`;
+const P3 = (probs) => { const b = probs?.burn ?? 1 / 3, l = probs?.bless ?? 1 / 3; return { b, l, s: Math.max(0, 1 - b - l) }; };
+
+function setOdds(probs, live) {
+  const { b, l, s } = P3(probs);
+  $("pBurn").textContent = pct(b); $("pBless").textContent = pct(l); $("pStash").textContent = pct(s);
+  $("pBurnLbl").textContent = $("pBlessLbl").textContent = $("pStashLbl").textContent = live ? "odds this pull" : "odds last pull";
+  $("dbar").style.setProperty("--pb", `${b * 100}%`); $("dbar").style.setProperty("--pl", `${(b + l) * 100}%`);
+  $("dPb").textContent = pct(b); $("dPl").textContent = pct(l); $("dPs").textContent = pct(s);
+}
+function setDice(draw) {
+  const d = $("dice"); if (!draw) { d.classList.remove("on"); return; }
+  d.classList.add("on"); $("dbar").style.setProperty("--tk", `${(draw.ticket / draw.of) * 100}%`);
+  $("dRoll").textContent = `roll ${(draw.ticket / draw.of).toFixed(4)}${draw.slot ? ` · block ${num(draw.slot)}` : ""}`;
+}
+const armEl = (a) => $(a === "bless" ? "armBless" : a === "stash" ? "armStash" : "armBurn");
+function showToast(action, r) {
+  const t = $("toast"); t.className = `toast ${action} on`;
+  const demo = show.demo ? " <small style='color:var(--mute)'>· preview, nothing moved</small>" : r?.dry ? " <small style='color:var(--mute)'>· dry run</small>" : "";
+  if (action !== "stash" && (r?.status === "skipped" || r?.status === "failed")) { $("toastBig").textContent = "ROLLED OVER"; $("toastSub").textContent = "the pot stays for the next pull"; }
+  else if (action === "bless") { $("toastBig").textContent = "BLESSED"; $("toastSub").innerHTML = `<span class="mono">${short(r?.winner) || "a holder"}</span> gets <b>${big(r?.blessed || r?.bought)} ${sym()}</b>${r?.winnerPct != null ? ` — had ${Number(r.winnerPct).toFixed(2)}% odds` : ""}${demo}`; }
+  else if (action === "stash") { $("toastBig").textContent = "STASHED"; $("toastSub").innerHTML = `the rat keeps <b>${r?.pot != null ? `${Number(r.pot).toPrecision(3)} ${T?.quote?.symbol || "SOL"}` : "the pot"}</b> — the next pull is bigger${demo}`; }
+  else { $("toastBig").textContent = "BURNED"; $("toastSub").innerHTML = `<b>${big(r?.burned || r?.bought)} ${sym()}</b> gone forever${demo}`; }
+  armEl(action).classList.add("win");
+  setTimeout(() => { t.classList.remove("on"); for (const a of ARMS) armEl(a).classList.remove("win"); setDice(null); refreshLists(); }, 5200);
+}
+function preview(action) {
+  if (!rat || show.id || rat.mode === "travel" || rat.mode === "perform" || rat.mode === "think") return;
+  const pb = .2 + Math.random() * .35, pl = Math.min(.2 + Math.random() * .3, .9 - pb), ps = 1 - pb - pl;
+  const ticket = action === "burn" ? Math.floor(Math.random() * pb * 1e4) : action === "bless" ? Math.floor((pb + Math.random() * pl) * 1e4) : Math.floor((pb + pl + Math.random() * ps) * 1e4);
+  Object.assign(show, { id: "demo", demo: true, action: null, result: null });
+  rat.mode = "think"; rat.t = 0; $("status").innerHTML = "preview — <b>nothing moves on chain</b>";
+  setTimeout(() => { if (show.id !== "demo") return; show.action = action; setOdds({ burn: pb, bless: pl, stash: ps }, true); setDice({ ticket, of: 1e4 }); $("status").innerHTML = `preview · the roll says <b>${action.toUpperCase()}</b>`; }, 2000);
+  setTimeout(() => { if (show.id !== "demo") return; show.result = { status: "done", bought: 250000 + Math.random() * 5e5, pot: .2 + Math.random(), winner: "LABrat1111111111111111111111111111111111CHSe", winnerPct: 1 + Math.random() * 4 }; }, 7000);
+}
+document.querySelectorAll("[data-pv]").forEach((b) => b.addEventListener("click", () => preview(b.dataset.pv)));
+
+// the director: turns engine progress into trips to the levers
+director = () => {
+  if (!rat) return;
+  const p = T?.started ? T.progress : null;
+  if (p && p.trialId && p.trialId !== lastTrialSeen && nowS() - p.at < 90 && !show.demo) {
+    lastTrialSeen = p.trialId;
+    if (rat.mode !== "travel" && rat.mode !== "perform") { Object.assign(show, { id: p.trialId, action: null, result: null, demo: false }); rat.mode = "think"; rat.t = 0; }
+  }
+  if (p && show.id === p.trialId) {
+    if (p.action && !show.action && p.status !== "skipped") { show.action = p.action; setOdds(p.probs, true); setDice(p.draw); }
+    if (!OPEN.includes(p.status) && !show.result) show.result = p;
+  }
+  if (!T?.started && !show.id && performance.now() > demoAt && ["stand", "walk", "groom"].includes(rat.mode)) { demoAt = performance.now() + 40000; preview(ARMS[Math.floor(Math.random() * 3)]); }
+};
+
+function renderHud() {
+  if (!T) return;
+  const started = T.started, p = started ? T.progress : null, left = started ? Math.max(0, Math.round(T.nextTrialAt - nowS())) : 0;
+  const inFlight = p && OPEN.includes(p.status);
+  $("clock").textContent = !started ? "SOON" : inFlight || (show.id && !show.demo) ? "NOW" : `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
+  $("clock").classList.toggle("hot", Boolean(inFlight) || (started && left <= 10));
+  $("clockLbl").textContent = !started ? "first lever pull" : inFlight ? `trial #${p.trialId}` : "next lever pull in";
+  if (show.demo) return;
+  const who = (x) => (x?.brain === "jev" ? `Jev${x.latencyMs ? ` (${x.latencyMs} ms)` : ""}` : "instinct");
+  let s = "";
+  if (!started) s = "the coin is not live yet — the rat is warming up. <b>Tap ▶ preview</b> on a lever.";
+  else if (!T.schedulerEnabled) s = "the engine is paused";
+  else if (inFlight && !p.action) s = "the rat is sniffing… <b>asking its brain</b>";
+  else if (inFlight) s = `${who(p)} set the odds · the block pulled <b>${p.action.toUpperCase()}</b> · ${p.status === "claiming" ? "claiming the fees" : p.status === "buying" ? "buying back" : p.action === "burn" ? "burning" : p.action === "stash" ? "hoarding" : `blessing ${short(p.winner)}`}…`;
+  else if (T.lastTrial) { const l = T.lastTrial; s = l.status === "done" && l.action ? `last: #${l.id} <b>${l.action.toUpperCase()}</b> · ${l.action === "bless" ? `${short(l.winner)} got ${big(l.tokensBlessed)}` : l.action === "stash" ? `the pot rolled over` : `${big(l.tokensBurned)} burned`}${l.dry ? " · dry run" : ""}` : `last: #${l.id} rolled over — the pot keeps growing`; }
+  else s = "first lever pull when the clock hits zero";
+  $("status").innerHTML = s;
+}
+
+function renderToken() {
+  const t = T; if (!t) return;
+  const jev = t.jev?.online; $("led").classList.toggle("on", Boolean(jev));
+  $("brain").textContent = jev ? `Jev · ${t.jev.model}` : "instinct · 1/3 each";
+  if (t.brand?.twitter) { $("xLink").hidden = false; $("xLink").href = t.brand.twitter; }
+  if (t.brand?.telegram) { $("tgLink").hidden = false; $("tgLink").href = t.brand.telegram; }
+  $("topN").textContent = t.rules?.blessTopN || 100;
+  if (!t.started) { $("pot").textContent = "not live"; return; }
+  $("caText").textContent = t.mint; $("buy").href = t.links.pump; $("buy").textContent = `Buy $${t.symbol}`;
+  $("pot").textContent = `${Number(t.pot.total).toPrecision(3)} ${t.quote.symbol} ≈ $${num(t.pot.totalUsd, 2)}`;
+  const tot = t.dryRun ? t.dryTotals : t.totals;
+  $("burnN").textContent = `${num(tot.burns)} burns`; $("blessN").textContent = `${num(tot.blessings)} blessings`; $("stashN").textContent = `${num(tot.stashes || 0)} stashes`; $("pulls").textContent = num(tot.trials);
+  $("burnTok").textContent = big(t.dryRun ? tot.burned : Math.max(tot.burned, t.burned));
+  $("kTrials").textContent = num(tot.trials); $("kBurned").textContent = big(t.dryRun ? tot.burned : Math.max(tot.burned, t.burned)); $("kBlessed").textContent = big(tot.blessed); $("kUsd").textContent = `$${num(tot.spentUsd, 0)}`;
+  const l = t.lastTrial; if (l?.probs && !(t.progress && OPEN.includes(t.progress.status))) setOdds(l.probs, false);
+  if (l?.action === "bless" && l.winner) $("blessLine").innerHTML = `last: <b class="mono">${short(l.winner)}</b> got <b>${big(l.tokensBlessed)}</b> with ${Number(l.winnerPct || 0).toFixed(2)}% odds`;
+  $("footMeta").textContent = `engine ${t.mode}${t.dryRun ? " · dry run" : ""} · wallet ${short(t.wallet)} · mcap $${big(t.mcapUsd)} · one pull every ${t.rules.intervalSec}s`;
+}
+
+async function poll() {
+  try { T = await api("token"); skew = T.now - Date.now() / 1000; renderToken(); } catch { /* keep the last state */ }
+  const busy = T?.started && ((T.progress && OPEN.includes(T.progress.status)) || T.nextTrialAt - nowS() < 8);
+  setTimeout(poll, busy ? 1000 : 4000);
+}
+setInterval(renderHud, 250);
+$("ca").addEventListener("click", async () => { if (!T?.mint) return; await navigator.clipboard.writeText(T.mint).catch(() => {}); const e = $("caText"); e.textContent = "copied ✓"; setTimeout(() => (e.textContent = T.mint), 1200); });
+
+/* ------------------------------------------------ lab log + verification */
+const sha256 = async (s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+let trials = [], openRow = null;
+const hhmm = (t) => new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+function rowHtml(r) {
+  const { b, l } = P3(r.probs), pb = b * 100, pl = (b + l) * 100, d = r.readings?.draw, tk = d ? (d.ticket / d.of) * 100 : null;
+  const q = T?.quote?.symbol || "SOL";
+  const what = r.status !== "done" || !r.action ? `<small>${r.note || "rolled over"}</small>`
+    : r.action === "burn" ? `🔥 <b>${big(r.tokensBurned)}</b> burned <small>· ${Number(r.spentQuote).toPrecision(3)} ${q}${r.dry ? " · dry" : ""}</small>`
+    : r.action === "stash" ? `🕳 <b>stashed</b> <small>· pot ${Number(r.potQuote).toPrecision(3)} ${q} rolls over${r.dry ? " · dry" : ""}</small>`
+    : `🧀 <b>${big(r.tokensBlessed)}</b> → <span class="mono">${short(r.winner)}</span> <small>· had ${Number(r.winnerPct || 0).toFixed(2)}%${r.dry ? " · dry" : ""}</small>`;
+  const ch = r.changePct == null ? "<small style='color:var(--mute)'>…</small>" : `<span class="${r.changePct >= 0 ? "up" : "down"}">${r.changePct >= 0 ? "+" : ""}${r.changePct.toFixed(2)}%</span>`;
+  return `<div class="row" data-id="${r.id}"><span class="id">#${r.id}</span><span class="tm" style="color:var(--mute)">${hhmm(r.t)}</span><span class="br"><span class="tag ${r.brain === "jev" ? "jev" : ""}">${r.action ? (r.brain === "jev" ? "jev" : "instinct") : "—"}</span></span><span class="bar">${r.action ? `<div class="mini" style="--pb:${pb}%;--pl:${pl}%;--tk:${tk ?? -10}%"><i></i></div><small>${Math.round(pb)} / ${Math.round(l * 100)} / ${Math.round(100 - pl)}${d ? ` · roll ${(d.ticket / d.of).toFixed(4)}` : ""}</small>` : ""}</span><span class="what">${what}</span><span class="mono" style="text-align:right">${ch}</span></div>${openRow === r.id ? `<div class="detail" id="detail-${r.id}">loading…</div>` : ""}`;
+}
+async function renderDetail(id) {
+  const el = $(`detail-${id}`); if (!el) return;
+  let r; try { r = await api(`trials/${id}`); } catch { el.textContent = "could not load this trial."; return; }
+  const tx = (l, s) => (s ? `<a href="https://solscan.io/tx/${s}" target="_blank" rel="noopener">${l}↗</a>` : "");
+  const rd = r.readings || {}, out = [], { b, l, s } = P3(r.probs);
+  out.push(`<b>${r.brain === "jev" ? `Jev (${r.model || "jev"}) answered in ${r.latencyMs} ms` : "Instinct — Jev was not connected or not reachable, so every lever got equal odds"}</b>: P(burn) ${(b * 100).toFixed(1)}% · P(bless) ${(l * 100).toFixed(1)}% · P(stash) ${(s * 100).toFixed(1)}%${rd.top_answer ? ` · top answer <b>${rd.top_answer}</b>` : ""}${rd.dumping != null ? ` · dumping ${(rd.dumping * 100).toFixed(0)}%` : ""}${rd.momentum != null ? ` · momentum ${(rd.momentum * 100).toFixed(0)}%` : ""}`);
+  if (rd.draw && rd.seed) {
+    const h = await sha256(rd.draw.input), ticket = parseInt(h.slice(0, 8), 16) % rd.draw.of, burnLine = Math.round(b * rd.draw.of), blessLine = Math.min(rd.draw.of, burnLine + Math.round(l * rd.draw.of));
+    const action = ticket < burnLine ? "burn" : ticket < blessLine ? "bless" : "stash";
+    const good = h === rd.draw.sha256 && ticket === rd.draw.ticket && rd.draw.input.startsWith(rd.seed.blockhash);
+    out.push(`<b>The roll</b> — seed: Solana block <a href="https://solscan.io/block/${rd.seed.slot}" target="_blank" rel="noopener">${num(rd.seed.slot)}↗</a> · ticket ${ticket} of ${rd.draw.of}, burn line ${burnLine}, bless line ${blessLine} → <b>${action.toUpperCase()}</b> · <span class="${good ? "ok" : "bad"}">${good ? "✓ recomputed in your browser" : "✗ does not match"}</span><pre>sha256("${rd.draw.input}")\n= ${h}</pre>`);
+  }
+  if (rd.bless?.holders) {
+    const h = await sha256(rd.bless.input), total = rd.bless.holders.reduce((a, x) => a + BigInt(x[1]), 0n), ticket = BigInt("0x" + h.slice(0, 16)) % total;
+    let acc = 0n, w = null; for (const [o, amt] of rd.bless.holders) { acc += BigInt(amt); if (ticket < acc) { w = o; break; } }
+    const good = w === r.winner;
+    out.push(`<b>The blessing</b> — ${rd.bless.holders.length} wallets in the draw${rd.bless.totalHolders ? ` (of ${num(rd.bless.totalHolders)} holders)` : ""}, ${big(Number(total) / 1e6)} tokens between them · ticket ${ticket.toString()} → <a href="https://solscan.io/account/${w}" target="_blank" rel="noopener" class="mono">${short(w)}↗</a> who held ${Number(r.winnerPct).toFixed(3)}% of the draw · <span class="${good ? "ok" : "bad"}">${good ? "✓ recomputed in your browser" : "✗ does not match"}</span><pre>sha256("${rd.bless.input}")\n= ${h}</pre>`);
+  }
+  const rc = [tx("claim", r.claimTx), tx("buy", r.buyTx), tx("burn", r.burnTx), tx("bless", r.blessTx)].filter(Boolean).join(" · ");
+  out.push(`<b>Receipts</b> — ${rc || (r.action === "stash" ? "stash: nothing moves on chain, the pot rolls over" : r.dry ? "dry run: nothing moved on chain" : "no transaction")}${r.note ? `<br>${r.note}` : ""}`);
+  if (r.state) out.push(`<b>What the brain saw</b><pre>${JSON.stringify(r.state, null, 1)}</pre>`);
+  el.innerHTML = out.join("<br><br>");
+}
+function renderLog() {
+  const box = $("logBox"); if (!trials.length) return;
+  box.innerHTML = trials.map(rowHtml).join(""); if (openRow) renderDetail(openRow);
+}
+$("logBox").addEventListener("click", (e) => { if (e.target.closest(".detail")) return; const row = e.target.closest(".row"); if (!row) return; const id = Number(row.dataset.id); openRow = openRow === id ? null : id; renderLog(); });
+
+async function refreshLists() {
+  try { trials = await api("trials?limit=40"); if (!openRow) renderLog(); else if (!$(`detail-${openRow}`)) renderLog(); } catch {}
+  try {
+    const b = await api("blessed"); $("boardN").textContent = b.length ? `${b.length} wallets` : "";
+    if (b.length) $("board").innerHTML = b.slice(0, 12).map((w, i) => `<div class="brow"><span style="color:var(--mute)">${i + 1}</span><a href="https://solscan.io/account/${w.wallet}" target="_blank" rel="noopener">${short(w.wallet)}</a><span><b>${big(w.tokens)}</b> <small>· ${w.times}× · $${num(w.usd, 2)}</small></span></div>`).join("");
+  } catch {}
+  try {
+    const rs = await api("results");
+    for (const arm of ARMS) {
+      const rows = rs.filter((x) => x.action === arm), n = rows.reduce((a, x) => a + x.n, 0), sc = rows.reduce((a, x) => a + x.scored, 0), up = rows.reduce((a, x) => a + x.up, 0);
+      const avg = sc ? rows.reduce((a, x) => a + (x.avgChangePct || 0) * x.scored, 0) / sc : null, jevN = rows.filter((x) => x.brain === "jev").reduce((a, x) => a + x.n, 0);
+      const id = arm === "burn" ? "rBurn" : arm === "bless" ? "rBless" : "rStash";
+      $(id).textContent = avg == null ? "—" : `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`;
+      const last = arm === "burn" ? `<dt>tokens burned</dt><dd>${big(rows.reduce((a, x) => a + x.burned, 0))}</dd>` : arm === "bless" ? `<dt>tokens given away</dt><dd>${big(rows.reduce((a, x) => a + x.blessed, 0))}</dd>` : `<dt>pots kept for later</dt><dd>${n}</dd>`;
+      $(id + "Dl").innerHTML = `<dt>avg price move one interval later</dt><dd>${avg == null ? "—" : avg.toFixed(2) + "%"}</dd><dt>times pulled</dt><dd>${n}</dd><dt>price was higher after</dt><dd>${sc ? `${up} of ${sc}` : "—"}</dd><dt>odds set by Jev / instinct</dt><dd>${jevN} / ${n - jevN}</dd>${last}`;
+    }
+  } catch {}
+}
+
+/* ------------------------------------------------ odds checker */
+let oddsTimer = null;
+async function loadOdds(wallet) {
+  try {
+    const o = await api(`odds${wallet ? `?wallet=${encodeURIComponent(wallet)}` : ""}`);
+    if (!o.started) { $("oddsRes").innerHTML = "The draw opens when the coin is live."; return; }
+    if (o.holders?.length) $("oddsTop").innerHTML = `<small style="color:var(--mute)">in the draw right now: ${o.inDraw} wallets${o.totalHolders ? ` of ${num(o.totalHolders)} holders` : ""}</small>` + o.holders.slice(0, 6).map((h) => `<div class="brow"><span style="color:var(--mute)">${h.rank}</span><span class="mono">${short(h.wallet)}</span><span><b>${h.oddsPct.toFixed(2)}%</b> <small>· ${big(h.tokens)}</small></span></div>`).join("");
+    if (!wallet) return;
+    const y = o.you; if (!y || !y.rank) { $("oddsRes").innerHTML = `<span class="n">0%</span>This wallet is not in the draw right now — it holds nothing, or sits outside the top ${o.limit}.`; return; }
+    const pB = o.avgPBless ?? 1 / 3, perDay = o.trialsPerDay * pB * (y.oddsPct / 100);
+    $("oddsRes").innerHTML = `<span class="n">${y.oddsPct.toFixed(y.oddsPct < 1 ? 3 : 2)}%</span>per blessing · rank <b>#${y.rank}</b> with <b>${big(y.tokens)}</b> tokens. At the recent pace (bless ≈ ${Math.round(pB * 100)}% of ${o.trialsPerDay} pulls a day) that is about <b>${perDay >= 1 ? perDay.toFixed(1) : perDay.toFixed(2)}</b> blessings a day on average — luck decides the rest.`;
+  } catch { $("oddsRes").textContent = "holder list unavailable right now — try again in a minute."; }
+}
+$("oddsIn").addEventListener("input", (e) => { clearTimeout(oddsTimer); const v = e.target.value.trim(); if (v.length >= 32 && v.length <= 44) oddsTimer = setTimeout(() => loadOdds(v), 400); else $("oddsRes").textContent = ""; });
+
+/* ------------------------------------------------ protocol */
+api("protocol").then((p) => {
+  const q = (k, x) => `<div class="card q"><span class="tag jev">${x.type}</span><b class="mono">${k}</b><blockquote>${x.instructions}</blockquote><ul>${Object.entries(x.criteria).map(([c, d]) => `<li><b>${c}</b> — ${d}</li>`).join("")}</ul></div>`;
+  $("proto").innerHTML = Object.entries(p.questions).map(([k, x]) => q(k, x)).join("") + `<div class="card q"><span class="tag">dice</span><b class="mono">the roll</b><ul><li><b>seed</b> — ${p.dice.seed}</li><li><b>which lever</b> — <span class="mono">${p.dice.arm}</span></li><li><b>which holder</b> — <span class="mono">${p.dice.holder}</span></li><li><b>snapshot</b> — ${p.dice.snapshot}</li><li><b>no model</b> — ${p.odds.instinct}</li></ul></div>`;
+}).catch(() => {});
+
+if (new URLSearchParams(location.search).get("og")) document.body.classList.add("og");
+const qp = new URLSearchParams(location.search).get("pv"); if (ARMS.includes(qp)) setTimeout(() => preview(qp), 500);
+const qs = Number(new URLSearchParams(location.search).get("step")); if (qs) setTimeout(() => window.__rat?.step(qs), 7200); // headless screenshots
+poll(); refreshLists(); loadOdds(""); setInterval(refreshLists, 20000);
+</script>
+</body>
+</html>
