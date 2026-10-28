@@ -1,5 +1,7 @@
 # LABRAT
 
+> **Live:** https://labrat-two.vercel.app · **CA `$LABRAT`:** [`6gUbPAgMx2gTMCVH9wCEWUpKztmabuHosW8gvtXBpump`](https://pump.fun/coin/6gUbPAgMx2gTMCVH9wCEWUpKztmabuHosW8gvtXBpump) · [Solscan](https://solscan.io/token/6gUbPAgMx2gTMCVH9wCEWUpKztmabuHosW8gvtXBpump) · [DexScreener](https://dexscreener.com/solana/6gUbPAgMx2gTMCVH9wCEWUpKztmabuHosW8gvtXBpump)
+
 A 3D lab rat with **Jev** (TypeSafe AI's System One model) for a brain, running the treasury of a pump.fun coin
 from inside a Skinner box with three levers. Every 3 minutes, on a fixed clock:
 
